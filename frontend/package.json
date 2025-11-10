@@ -1,0 +1,47 @@
+{
+  "name": "timemind-ai-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "نظام متطور لإدارة الوقت والمهام مدعوم بالكامل بالذكاء الاصطناعي",
+  "author": "Labeeb Naji <labeebderhem@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/labeeb-7z/timemind-ai-frontend.git"
+  },
+  "keywords": [
+    "time-management",
+    "task-management",
+    "ai-powered",
+    "swot-analysis",
+    "productivity",
+    "react",
+    "arabic"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "start": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.20.0",
+    "axios": "^1.6.2",
+    "recharts": "^2.10.3",
+    "react-calendar": "^4.7.0",
+    "react-beautiful-dnd": "^13.1.1",
+    "date-fns": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.43",
+    "@types/react-dom": "^18.2.17",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.32",
+    "tailwindcss": "^3.3.6",
+    "vite": "^5.0.8"
+  }
+}
