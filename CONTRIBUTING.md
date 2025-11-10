@@ -9,7 +9,7 @@ Click the "Fork" button at the top of the page
 
 ### 2. Clone the Project
 ```bash
-git clone https://github.com/YOUR-USERNAME/timemind-ai-frontend.git
+git clone https://github.com/labeebnaji/timemind-ai-frontend.git
 cd timemind-ai-frontend
 ```
 

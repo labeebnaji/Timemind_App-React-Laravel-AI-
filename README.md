@@ -205,6 +205,10 @@ Backend includes:
 
 ![Settings](./screenshots/Settings.png)
 
+### Backend (Laravel API)
+
+![Backend](./screenshots/Backend.png)
+
 ### Responsive Design
 
 ![Responsive](./screenshots/Responsive.png)
