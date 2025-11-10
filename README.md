@@ -300,7 +300,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Labeeb Naji**
 
 - 📧 Email: <labeebderhem@gmail.com>
-- 💼 GitHub: [@labeeb-7z](https://github.com/labeeb-7z)
+- 💼 GitHub: [@labeebnaji](https://github.com/labeebnaji)
 
 ---
 
@@ -332,9 +332,9 @@ To get the complete Backend or for any inquiries:
 
 ## 📊 Stats
 
-![GitHub stars](https://img.shields.io/github/stars/labeeb-7z/timemind-ai-frontend?style=social)
-![GitHub forks](https://img.shields.io/github/forks/labeeb-7z/timemind-ai-frontend?style=social)
-![GitHub watchers](https://img.shields.io/github/watchers/labeeb-7z/timemind-ai-frontend?style=social)
+![GitHub stars](https://img.shields.io/github/stars/labeebnaji/Timemind_App-React-Laravel-AI-?style=social)
+![GitHub forks](https://img.shields.io/github/forks/labeebnaji/Timemind_App-React-Laravel-AI-?style=social)
+![GitHub watchers](https://img.shields.io/github/watchers/labeebnaji/Timemind_App-React-Laravel-AI-?style=social)
 
 ---
 
