@@ -14,6 +14,7 @@ import Layout from './components/Layout'
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -22,9 +23,20 @@ function App() {
       setIsAuthenticated(true)
       setUser(JSON.parse(userData))
     }
+    setLoading(false)
   }, [])
 
   const ProtectedRoute = ({ children }) => {
+    if (loading) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+          <div className="text-center">
+            <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-600">جاري التحميل...</p>
+          </div>
+        </div>
+      )
+    }
     return isAuthenticated ? children : <Navigate to="/login" />
   }
 

@@ -7,7 +7,12 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies
 node_modules
+frontend/node_modules
+backend/vendor
+
+# Build output
 dist
 dist-ssr
 *.local
@@ -23,11 +28,31 @@ dist-ssr
 *.sln
 *.sw?
 
-# Environment variables
+# Environment variables (keep examples)
 .env
 .env.local
 .env.production
+backend/.env
+!backend/.env.example
+!frontend/.env.example
 
-# Backend (not included in this repo)
-backend/
-!backend/.gitkeep
+# Laravel specific
+backend/storage/logs/*
+backend/storage/framework/cache/*
+backend/storage/framework/sessions/*
+backend/storage/framework/views/*
+backend/bootstrap/cache/*
+!backend/storage/logs/.gitkeep
+!backend/storage/framework/cache/.gitkeep
+!backend/storage/framework/sessions/.gitkeep
+!backend/storage/framework/views/.gitkeep
+!backend/bootstrap/cache/.gitkeep
+
+# Database
+*.sqlite
+backend/database/*.sqlite
+
+# Package locks (optional - can be included)
+package-lock.json
+frontend/package-lock.json
+backend/composer.lock

@@ -25,10 +25,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/timemind/timemind-ai.git"
+    "url": "https://github.com/labeebnaji/Timemind_App-React-Laravel-AI-.git"
   },
-  "bugs": {
-    "url": "https://github.com/timemind/timemind-ai/issues"
-  },
-  "homepage": "https://github.com/timemind/timemind-ai#readme"
+  "homepage": "https://github.com/labeebnaji/Timemind_App-React-Laravel-AI-#readme"
 }

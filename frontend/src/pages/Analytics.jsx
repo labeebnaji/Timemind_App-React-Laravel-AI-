@@ -1,66 +1,139 @@
 import { useState, useEffect } from 'react'
-import { analyticsAPI } from '../services/api'
+import { analyticsAPI, tasksAPI } from '../services/api'
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 
 const Analytics = ({ user }) => {
   const [period, setPeriod] = useState('weekly')
-  const [stats, setStats] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState({
+    totalTasks: 0,
+    completedTasks: 0,
+    completionRate: 0,
+    overdueTasks: 0
+  })
+  const [weeklyData, setWeeklyData] = useState([])
+  const [categoryData, setCategoryData] = useState([])
+  const [priorityData, setPriorityData] = useState([])
 
   useEffect(() => {
     loadAnalytics()
   }, [period])
 
   const loadAnalytics = async () => {
+    setLoading(true)
     try {
-      const response = period === 'weekly' 
-        ? await analyticsAPI.getWeekly()
-        : await analyticsAPI.getMonthly()
-      setStats(response.data)
+      const [dashboardRes, tasksRes, periodRes] = await Promise.all([
+        analyticsAPI.getDashboard(),
+        tasksAPI.getAll(),
+        period === 'weekly' ? analyticsAPI.getWeekly() : analyticsAPI.getMonthly()
+      ])
+
+      const tasks = tasksRes.data
+      
+      // Set stats from dashboard
+      setStats({
+        totalTasks: dashboardRes.data.total_tasks || tasks.length,
+        completedTasks: dashboardRes.data.completed_tasks || tasks.filter(t => t.completed).length,
+        completionRate: dashboardRes.data.completion_rate || 0,
+        overdueTasks: dashboardRes.data.overdue_tasks || 0
+      })
+
+      // Process weekly data
+      if (period === 'weekly' && Array.isArray(periodRes.data)) {
+        setWeeklyData(periodRes.data.map(d => ({
+          day: d.day || d.date,
+          completed: d.completed || 0,
+          total: d.total || 0
+        })))
+      }
+
+      // Calculate category distribution from real tasks
+      const categoryColors = {
+        'work': '#3B82F6',
+        'study': '#10B981', 
+        'personal': '#F59E0B',
+        'health': '#EF4444',
+        'other': '#6B7280',
+        'عمل': '#3B82F6',
+        'دراسة': '#10B981',
+        'شخصي': '#F59E0B',
+        'صحة': '#EF4444',
+        'أخرى': '#6B7280'
+      }
+
+      const categoryLabels = {
+        'work': 'عمل',
+        'study': 'دراسة',
+        'personal': 'شخصي',
+        'health': 'صحة',
+        'other': 'أخرى'
+      }
+
+      const categoryCounts = tasks.reduce((acc, task) => {
+        const cat = task.category || 'other'
+        acc[cat] = (acc[cat] || 0) + 1
+        return acc
+      }, {})
+
+      setCategoryData(Object.entries(categoryCounts).map(([name, value]) => ({
+        name: categoryLabels[name] || name,
+        value,
+        color: categoryColors[name] || '#6B7280'
+      })))
+
+      // Calculate priority distribution
+      const priorityCounts = tasks.reduce((acc, task) => {
+        acc[task.priority] = (acc[task.priority] || 0) + 1
+        return acc
+      }, {})
+
+      setPriorityData([
+        { name: 'عالية', value: priorityCounts.high || 0, color: '#EF4444' },
+        { name: 'متوسطة', value: priorityCounts.medium || 0, color: '#F59E0B' },
+        { name: 'منخفضة', value: priorityCounts.low || 0, color: '#3B82F6' }
+      ])
+
     } catch (error) {
       console.error('Error loading analytics:', error)
+    } finally {
+      setLoading(false)
     }
   }
 
-  const productivityData = [
-    { time: '6-8', tasks: 2 },
-    { time: '8-10', tasks: 8 },
-    { time: '10-12', tasks: 12 },
-    { time: '12-14', tasks: 6 },
-    { time: '14-16', tasks: 10 },
-    { time: '16-18', tasks: 9 },
-    { time: '18-20', tasks: 5 },
-    { time: '20-22', tasks: 3 }
-  ]
-
-  const weeklyComparison = [
-    { week: 'الأسبوع 1', planned: 40, completed: 35 },
-    { week: 'الأسبوع 2', planned: 45, completed: 42 },
-    { week: 'الأسبوع 3', planned: 38, completed: 38 },
-    { week: 'الأسبوع 4', planned: 50, completed: 45 }
-  ]
-
-  const categoryData = [
-    { name: 'عمل', value: 35, color: '#3B82F6' },
-    { name: 'دراسة', value: 25, color: '#10B981' },
-    { name: 'شخصي', value: 20, color: '#F59E0B' },
-    { name: 'صحة', value: 15, color: '#EF4444' },
-    { name: 'أخرى', value: 5, color: '#6B7280' }
-  ]
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">جاري التحميل...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">التقارير والإحصائيات 📊</h1>
+    <div className="space-y-4 sm:space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">التقارير والإحصائيات 📊</h1>
         <div className="flex gap-2">
           <button
             onClick={() => setPeriod('weekly')}
-            className={`px-4 py-2 rounded-lg ${period === 'weekly' ? 'bg-primary text-white' : 'bg-gray-200'}`}
+            className={`px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base font-medium transition-colors ${
+              period === 'weekly' 
+                ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white' 
+                : 'bg-gray-200 hover:bg-gray-300'
+            }`}
           >
             أسبوعي
           </button>
           <button
             onClick={() => setPeriod('monthly')}
-            className={`px-4 py-2 rounded-lg ${period === 'monthly' ? 'bg-primary text-white' : 'bg-gray-200'}`}
+            className={`px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base font-medium transition-colors ${
+              period === 'monthly' 
+                ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white' 
+                : 'bg-gray-200 hover:bg-gray-300'
+            }`}
           >
             شهري
           </button>
@@ -68,190 +141,192 @@ const Analytics = ({ user }) => {
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="card bg-gradient-to-br from-blue-500 to-blue-600 text-white">
-          <p className="text-blue-100 mb-1">إجمالي المهام</p>
-          <h3 className="text-4xl font-bold">16</h3>
-          <p className="text-sm text-blue-100 mt-2">↑ 12% عن الأسبوع الماضي</p>
-        </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <MetricCard
+          title="إجمالي المهام"
+          value={stats.totalTasks}
+          icon="📋"
+          gradient="from-blue-500 to-blue-600"
+        />
+        <MetricCard
+          title="المهام المكتملة"
+          value={stats.completedTasks}
+          icon="✅"
+          gradient="from-green-500 to-green-600"
+        />
+        <MetricCard
+          title="معدل الإنجاز"
+          value={`${stats.completionRate}%`}
+          icon="📊"
+          gradient="from-purple-500 to-purple-600"
+        />
+        <MetricCard
+          title="المهام المتأخرة"
+          value={stats.overdueTasks}
+          icon="⚠️"
+          gradient="from-red-500 to-red-600"
+        />
+      </div>
 
-        <div className="card bg-gradient-to-br from-green-500 to-green-600 text-white">
-          <p className="text-green-100 mb-1">معدل الإنجاز</p>
-          <h3 className="text-4xl font-bold">87%</h3>
-          <p className="text-sm text-green-100 mt-2">↑ 5% عن الأسبوع الماضي</p>
-        </div>
-
-        <div className="card bg-gradient-to-br from-purple-500 to-purple-600 text-white">
-          <p className="text-purple-100 mb-1">متوسط الوقت</p>
-          <h3 className="text-4xl font-bold">2.5 ساعة</h3>
-          <p className="text-sm text-purple-100 mt-2">لكل مهمة</p>
-        </div>
-
-        <div className="card bg-gradient-to-br from-orange-500 to-orange-600 text-white">
-          <p className="text-orange-100 mb-1">الإنتاجية</p>
-          <h3 className="text-4xl font-bold">9.2/10</h3>
-          <p className="text-sm text-orange-100 mt-2">تقييم ممتاز</p>
+      {/* Weekly Performance Chart */}
+      <div className="card !p-4 sm:!p-6">
+        <h2 className="text-base sm:text-lg font-bold mb-4">📈 الأداء الأسبوعي</h2>
+        <div className="h-48 sm:h-64 lg:h-72">
+          {weeklyData.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={weeklyData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="day" tick={{ fontSize: 10 }} />
+                <YAxis tick={{ fontSize: 10 }} />
+                <Tooltip />
+                <Legend wrapperStyle={{ fontSize: '12px' }} />
+                <Bar dataKey="total" fill="#93C5FD" name="إجمالي المهام" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="completed" fill="#3B82F6" name="المكتملة" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-full text-gray-500">
+              لا توجد بيانات أسبوعية بعد
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Productivity by Time */}
-      <div className="card">
-        <h2 className="text-xl font-bold mb-4">الإنتاجية حسب الوقت</h2>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={productivityData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="time" />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            <Line type="monotone" dataKey="tasks" stroke="#3B82F6" strokeWidth={3} name="المهام المنجزة" />
-          </LineChart>
-        </ResponsiveContainer>
-        <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-          <p className="font-semibold text-primary">💡 رؤية ذكية</p>
-          <p className="text-sm text-gray-600 mt-1">
-            أنت أكثر إنتاجية بين الساعة 10-12 صباحاً. حاول جدولة المهام الصعبة في هذا الوقت.
-          </p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Weekly Comparison */}
-        <div className="card">
-          <h2 className="text-xl font-bold mb-4">المخطط مقابل المنجز</h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={weeklyComparison}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="week" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="planned" fill="#93C5FD" name="المخطط" radius={[8, 8, 0, 0]} />
-              <Bar dataKey="completed" fill="#3B82F6" name="المنجز" radius={[8, 8, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
+      {/* Charts Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Category Distribution */}
-        <div className="card">
-          <h2 className="text-xl font-bold mb-4">توزيع المهام حسب الفئة</h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={categoryData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                outerRadius={100}
-                fill="#8884d8"
-                dataKey="value"
-              >
-                {categoryData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
+        <div className="card !p-4 sm:!p-6">
+          <h2 className="text-base sm:text-lg font-bold mb-4">📂 توزيع التصنيفات</h2>
+          <div className="h-48 sm:h-64">
+            {categoryData.length > 0 && categoryData.some(c => c.value > 0) ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={categoryData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => percent > 0 ? `${name} ${(percent * 100).toFixed(0)}%` : ''}
+                    outerRadius="70%"
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {categoryData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-500">
+                لا توجد مهام بعد
+              </div>
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* AI Insights */}
-      <div className="card bg-gradient-to-br from-indigo-50 to-purple-50">
-        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-          <span>🤖</span> تقارير الذكاء الاصطناعي
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="p-4 bg-white rounded-lg border-r-4 border-primary">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-2xl">📈</span>
-              <h3 className="font-semibold">تحسن ملحوظ</h3>
-            </div>
-            <p className="text-sm text-gray-600">
-              معدل إنجازك تحسن بنسبة 15% هذا الشهر مقارنة بالشهر الماضي
-            </p>
-          </div>
-
-          <div className="p-4 bg-white rounded-lg border-r-4 border-secondary">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-2xl">⚡</span>
-              <h3 className="font-semibold">توفير الوقت</h3>
-            </div>
-            <p className="text-sm text-gray-600">
-              تجميع المهام المتشابهة يمكن أن يوفر لك 3 ساعات أسبوعياً
-            </p>
-          </div>
-
-          <div className="p-4 bg-white rounded-lg border-r-4 border-warning">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-2xl">⏰</span>
-              <h3 className="font-semibold">نمط زمني</h3>
-            </div>
-            <p className="text-sm text-gray-600">
-              المهام المتعلقة بالعمل تأخذ وقتاً أطول من المتوقع بنسبة 20%
-            </p>
-          </div>
-
-          <div className="p-4 bg-white rounded-lg border-r-4 border-danger">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-2xl">🎯</span>
-              <h3 className="font-semibold">اقتراح</h3>
-            </div>
-            <p className="text-sm text-gray-600">
-              لديك 5 مهام متأخرة، يُنصح بإعادة تقييم الأولويات
-            </p>
+        {/* Priority Distribution */}
+        <div className="card !p-4 sm:!p-6">
+          <h2 className="text-base sm:text-lg font-bold mb-4">🎯 توزيع الأولويات</h2>
+          <div className="h-48 sm:h-64">
+            {priorityData.some(p => p.value > 0) ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={priorityData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => percent > 0 ? `${name} ${(percent * 100).toFixed(0)}%` : ''}
+                    outerRadius="70%"
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {priorityData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-500">
+                لا توجد مهام بعد
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Habits Tracking */}
-      <div className="card">
-        <h2 className="text-xl font-bold mb-4">تتبع العادات</h2>
-        <div className="space-y-4">
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="font-semibold">الالتزام بالمواعيد</span>
-              <span className="text-secondary font-bold">92%</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-3">
-              <div className="bg-secondary h-3 rounded-full" style={{ width: '92%' }}></div>
-            </div>
-          </div>
+      {/* Progress Summary */}
+      <div className="card !p-4 sm:!p-6">
+        <h2 className="text-base sm:text-lg font-bold mb-4">📋 ملخص التقدم</h2>
+        <div className="space-y-3 sm:space-y-4">
+          <ProgressBar 
+            label="معدل الإنجاز الكلي" 
+            value={stats.completionRate} 
+            color="bg-green-500" 
+          />
+          <ProgressBar 
+            label="المهام المكتملة" 
+            value={stats.totalTasks > 0 ? Math.round((stats.completedTasks / stats.totalTasks) * 100) : 0} 
+            color="bg-blue-500" 
+          />
+          <ProgressBar 
+            label="المهام في الوقت" 
+            value={stats.totalTasks > 0 ? Math.round(((stats.totalTasks - stats.overdueTasks) / stats.totalTasks) * 100) : 100} 
+            color="bg-purple-500" 
+          />
+        </div>
+      </div>
 
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="font-semibold">إكمال المهام في الوقت المحدد</span>
-              <span className="text-primary font-bold">85%</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-3">
-              <div className="bg-primary h-3 rounded-full" style={{ width: '85%' }}></div>
-            </div>
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="font-semibold">تنظيم المهام اليومية</span>
-              <span className="text-warning font-bold">78%</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-3">
-              <div className="bg-warning h-3 rounded-full" style={{ width: '78%' }}></div>
-            </div>
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="font-semibold">استخدام فترات الراحة</span>
-              <span className="text-danger font-bold">65%</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-3">
-              <div className="bg-danger h-3 rounded-full" style={{ width: '65%' }}></div>
-            </div>
-          </div>
+      {/* Stats Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="card !p-4 text-center">
+          <div className="text-3xl sm:text-4xl mb-2">📈</div>
+          <h3 className="font-bold text-lg sm:text-xl text-green-600">{stats.completionRate}%</h3>
+          <p className="text-gray-600 text-sm">معدل الإنجاز</p>
+        </div>
+        <div className="card !p-4 text-center">
+          <div className="text-3xl sm:text-4xl mb-2">✅</div>
+          <h3 className="font-bold text-lg sm:text-xl text-blue-600">{stats.completedTasks}</h3>
+          <p className="text-gray-600 text-sm">مهمة مكتملة</p>
+        </div>
+        <div className="card !p-4 text-center">
+          <div className="text-3xl sm:text-4xl mb-2">⏳</div>
+          <h3 className="font-bold text-lg sm:text-xl text-orange-600">{stats.totalTasks - stats.completedTasks}</h3>
+          <p className="text-gray-600 text-sm">مهمة متبقية</p>
         </div>
       </div>
     </div>
   )
 }
+
+const MetricCard = ({ title, value, icon, gradient }) => (
+  <div className={`bg-gradient-to-br ${gradient} text-white rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-lg`}>
+    <div className="flex items-center justify-between">
+      <div>
+        <p className="text-white/80 text-xs sm:text-sm mb-1">{title}</p>
+        <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold">{value}</h3>
+      </div>
+      <span className="text-2xl sm:text-3xl">{icon}</span>
+    </div>
+  </div>
+)
+
+const ProgressBar = ({ label, value, color }) => (
+  <div>
+    <div className="flex items-center justify-between mb-1.5">
+      <span className="font-medium text-sm sm:text-base">{label}</span>
+      <span className={`font-bold text-sm sm:text-base ${
+        value >= 80 ? 'text-green-600' : value >= 60 ? 'text-yellow-600' : 'text-red-600'
+      }`}>{value}%</span>
+    </div>
+    <div className="w-full bg-gray-200 rounded-full h-2 sm:h-2.5">
+      <div className={`${color} h-full rounded-full transition-all`} style={{ width: `${value}%` }}></div>
+    </div>
+  </div>
+)
 
 export default Analytics

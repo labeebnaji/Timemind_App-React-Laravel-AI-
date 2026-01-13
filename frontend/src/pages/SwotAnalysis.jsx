@@ -225,11 +225,11 @@ const SwotAnalysis = ({ user }) => {
 
           {/* Suggested Schedule */}
           {analysis.schedule && (
-            <div className="card bg-gradient-to-br from-purple-50 to-indigo-50">
-              <h3 className="text-xl font-bold mb-4">🗓️ الجدول الزمني المقترح</h3>
+            <div className="card !p-4 sm:!p-6 md:!p-8 bg-gradient-to-br from-purple-50 to-indigo-50">
+              <h3 className="text-base sm:text-lg md:text-xl font-bold mb-3 sm:mb-4">🗓️ الجدول الزمني المقترح</h3>
               <div className="space-y-2">
                 {analysis.schedule.map((item, i) => (
-                  <div key={i} className="p-3 bg-white rounded-lg">
+                  <div key={i} className="p-2 sm:p-3 bg-white rounded-lg text-sm sm:text-base">
                     <span className="font-semibold">{item.time}:</span> {item.task}
                   </div>
                 ))}
@@ -238,11 +238,11 @@ const SwotAnalysis = ({ user }) => {
           )}
 
           {/* Action Buttons */}
-          <div className="flex gap-4">
-            <button onClick={handleAcceptPlan} className="flex-1 btn-secondary">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            <button onClick={handleAcceptPlan} className="flex-1 btn-secondary text-sm sm:text-base !py-3 sm:!py-3.5">
               ✅ قبول الخطة وحفظها
             </button>
-            <button onClick={handleReanalyze} className="flex-1 btn-primary">
+            <button onClick={handleReanalyze} className="flex-1 btn-primary text-sm sm:text-base !py-3 sm:!py-3.5">
               🔄 إعادة التحليل
             </button>
           </div>

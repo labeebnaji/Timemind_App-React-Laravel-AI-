@@ -1,10 +1,24 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 
 const Layout = ({ children, user, setIsAuthenticated }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
   const location = useLocation()
   const navigate = useNavigate()
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768
+      setIsMobile(mobile)
+      if (!mobile) setSidebarOpen(true)
+      else setSidebarOpen(false)
+    }
+    
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   const menuItems = [
     { path: '/dashboard', icon: '📊', label: 'لوحة التحكم' },
@@ -23,81 +37,136 @@ const Layout = ({ children, user, setIsAuthenticated }) => {
     navigate('/login')
   }
 
+  const closeSidebarOnMobile = () => {
+    if (isMobile) setSidebarOpen(false)
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Mobile Menu Overlay */}
-      {sidebarOpen && (
+      {sidebarOpen && isMobile && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"
+          className="fixed inset-0 bg-black/50 z-40 transition-opacity duration-300"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed top-0 right-0 h-full glass-effect shadow-2xl transition-all duration-300 z-40 border-l border-gray-200 ${
-        sidebarOpen ? 'w-64 sm:w-72' : 'w-0 md:w-16 lg:w-20'
-      } ${sidebarOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`}>
-        <div className="p-3 sm:p-4 lg:p-6 h-full overflow-y-auto">
-          <div className="flex items-center justify-between mb-6 sm:mb-8">
-            {sidebarOpen && <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-primary">TimeMind AI</h1>}
+      <aside className={`
+        fixed top-0 right-0 h-full bg-white shadow-2xl z-50 transition-all duration-300 border-l border-gray-200
+        ${sidebarOpen ? 'w-64 xs:w-72 translate-x-0' : 'w-0 translate-x-full md:w-16 md:translate-x-0'}
+        overflow-hidden
+      `}>
+        <div className={`h-full flex flex-col ${sidebarOpen ? 'p-4' : 'p-2'}`}>
+          {/* Logo */}
+          <div className={`flex items-center mb-6 min-h-[40px] ${sidebarOpen ? 'justify-between' : 'justify-center'}`}>
+            {sidebarOpen && (
+              <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent whitespace-nowrap">
+                TimeMind AI
+              </h1>
+            )}
             <button 
               onClick={() => setSidebarOpen(!sidebarOpen)} 
-              className="text-xl sm:text-2xl p-2 hover:bg-gray-100 rounded-lg"
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors hidden md:block"
             >
-              {sidebarOpen ? '◀' : '▶'}
+              <span className="text-xl">{sidebarOpen ? '◀' : '▶'}</span>
             </button>
           </div>
           
-          <nav className="space-y-1 sm:space-y-2">
+          {/* Navigation */}
+          <nav className="flex-1 space-y-1 overflow-y-auto overflow-x-hidden">
             {menuItems.map(item => (
               <Link
                 key={item.path}
                 to={item.path}
-                onClick={() => window.innerWidth < 768 && setSidebarOpen(false)}
-                className={`flex items-center gap-2 sm:gap-3 lg:gap-4 px-2 sm:px-3 lg:px-4 py-2 sm:py-3 rounded-lg transition-all ${
-                  location.pathname === item.path
-                    ? 'bg-primary text-white'
-                    : 'hover:bg-gray-100'
-                }`}
+                onClick={closeSidebarOnMobile}
+                title={!sidebarOpen ? item.label : ''}
+                className={`
+                  flex items-center rounded-xl transition-all duration-200
+                  ${sidebarOpen ? 'gap-3 px-3 py-2.5' : 'justify-center p-2.5'}
+                  ${location.pathname === item.path
+                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+                    : 'hover:bg-gray-100 text-gray-700'
+                  }
+                `}
               >
-                <span className="text-xl sm:text-2xl flex-shrink-0">{item.icon}</span>
-                {sidebarOpen && <span className="font-semibold text-sm sm:text-base">{item.label}</span>}
+                <span className={`flex-shrink-0 ${sidebarOpen ? 'text-xl' : 'text-lg'}`}>{item.icon}</span>
+                {sidebarOpen && (
+                  <span className="font-medium text-sm whitespace-nowrap">{item.label}</span>
+                )}
               </Link>
             ))}
           </nav>
+
+          {/* User Info in Sidebar (Mobile) */}
+          {sidebarOpen && isMobile && (
+            <div className="pt-4 border-t border-gray-200 mt-4">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+                  {user?.name?.charAt(0) || 'م'}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-sm truncate">{user?.name || 'المستخدم'}</p>
+                  <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                </div>
+              </div>
+              <button 
+                onClick={handleLogout} 
+                className="w-full text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg font-bold text-sm transition-colors"
+              >
+                🚪 تسجيل الخروج
+              </button>
+            </div>
+          )}
         </div>
       </aside>
 
       {/* Main Content */}
-      <div className={`transition-all duration-300 ${sidebarOpen ? 'mr-0 md:mr-72' : 'mr-0 md:mr-20'}`}>
+      <div className={`transition-all duration-300 ${sidebarOpen && !isMobile ? 'md:mr-64 lg:mr-72' : 'md:mr-16'}`}>
         {/* Header */}
-        <header className="glass-effect shadow-lg sticky top-0 z-30">
-          <div className="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-4 w-full md:w-auto">
+        <header className="bg-white/95 backdrop-blur-lg shadow-sm sticky top-0 z-30 border-b border-gray-100">
+          <div className="px-3 sm:px-4 lg:px-6 py-3 flex items-center justify-between gap-2 sm:gap-4">
+            {/* Mobile Menu Button */}
+            <button 
+              onClick={() => setSidebarOpen(true)}
+              className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <span className="text-2xl">☰</span>
+            </button>
+
+            {/* Search */}
+            <div className="flex-1 max-w-xs sm:max-w-sm lg:max-w-md">
               <input
                 type="text"
-                placeholder="ابحث عن مهمة..."
-                className="px-4 py-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-200 focus:border-blue-500 w-full md:w-64 transition-all"
+                placeholder="ابحث..."
+                className="w-full px-3 sm:px-4 py-2 text-sm border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500 transition-all"
               />
             </div>
             
-            <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
-              <button className="relative p-2 hover:bg-blue-50 rounded-full transition-all">
-                <span className="text-xl sm:text-2xl">🔔</span>
-                <span className="absolute top-0 left-0 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse"></span>
+            {/* Right Side */}
+            <div className="flex items-center gap-2 sm:gap-3">
+              {/* Notifications */}
+              <button className="relative p-2 hover:bg-gray-100 rounded-full transition-colors">
+                <span className="text-xl">🔔</span>
+                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
               </button>
               
-              <div className="hidden sm:flex items-center gap-3">
-                <div className="text-left">
-                  <p className="font-bold text-sm lg:text-base">{user?.name || 'المستخدم'}</p>
+              {/* User Info (Desktop) */}
+              <div className="hidden sm:flex items-center gap-2 lg:gap-3">
+                <div className="text-left hidden lg:block">
+                  <p className="font-bold text-sm">{user?.name || 'المستخدم'}</p>
                   <p className="text-xs text-gray-500">{user?.email}</p>
                 </div>
-                <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                <div className="w-9 h-9 lg:w-10 lg:h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg">
                   {user?.name?.charAt(0) || 'م'}
                 </div>
               </div>
               
-              <button onClick={handleLogout} className="text-red-600 hover:bg-red-50 px-3 sm:px-4 py-2 rounded-xl font-bold text-sm sm:text-base transition-all">
+              {/* Logout (Desktop) */}
+              <button 
+                onClick={handleLogout} 
+                className="hidden sm:block text-red-600 hover:bg-red-50 px-3 py-2 rounded-xl font-bold text-sm transition-colors"
+              >
                 خروج
               </button>
             </div>
@@ -105,8 +174,10 @@ const Layout = ({ children, user, setIsAuthenticated }) => {
         </header>
 
         {/* Page Content */}
-        <main className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
-          {children}
+        <main className="p-3 sm:p-4 md:p-6 lg:p-8">
+          <div className="max-w-7xl mx-auto">
+            {children}
+          </div>
         </main>
       </div>
     </div>
