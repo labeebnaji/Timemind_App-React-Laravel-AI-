@@ -53,4 +53,12 @@ export const analyticsAPI = {
   getAISuggestions: () => api.get('/analytics/ai-suggestions')
 }
 
+export const notificationsAPI = {
+  getAll: () => api.get('/notifications'),
+  getUnread: () => api.get('/notifications/unread'),
+  markAsRead: (id) => api.patch(`/notifications/${id}/read`),
+  markAllAsRead: () => api.post('/notifications/mark-all-read'),
+  generateReminders: () => api.post('/notifications/generate-reminders')
+}
+
 export default api

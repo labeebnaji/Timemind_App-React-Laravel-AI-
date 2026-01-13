@@ -36,6 +36,9 @@ class TaskController extends Controller
 
         $task = $request->user()->tasks()->create($request->all());
 
+        // Create task notification (auto-read since user is on the page)
+        NotificationController::createTaskNotification($request->user()->id, $task);
+
         return response()->json($task, 201);
     }
 

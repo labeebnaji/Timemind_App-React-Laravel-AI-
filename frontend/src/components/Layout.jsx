@@ -1,9 +1,17 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { notificationsAPI } from '../services/api'
 
 const Layout = ({ children, user, setIsAuthenticated }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
+  const [showNotifications, setShowNotifications] = useState(false)
+  const [notifications, setNotifications] = useState([])
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [hasUrgent, setHasUrgent] = useState(false)
+  const [selectedNotification, setSelectedNotification] = useState(null)
+  const [shouldShake, setShouldShake] = useState(false)
+  const notificationRef = useRef(null)
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -20,6 +28,83 @@ const Layout = ({ children, user, setIsAuthenticated }) => {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
+  // Load notifications
+  useEffect(() => {
+    loadNotifications()
+    generateReminders()
+    
+    // Refresh every minute
+    const interval = setInterval(() => {
+      loadNotifications()
+      generateReminders()
+    }, 60000)
+    
+    return () => clearInterval(interval)
+  }, [])
+
+  // Shake animation every 5 minutes if unread
+  useEffect(() => {
+    if (unreadCount > 0) {
+      setShouldShake(true)
+      const timeout = setTimeout(() => setShouldShake(false), 1000)
+      
+      const shakeInterval = setInterval(() => {
+        setShouldShake(true)
+        setTimeout(() => setShouldShake(false), 1000)
+      }, 300000) // 5 minutes
+      
+      return () => {
+        clearTimeout(timeout)
+        clearInterval(shakeInterval)
+      }
+    }
+  }, [unreadCount])
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setShowNotifications(false)
+        setSelectedNotification(null)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const loadNotifications = async () => {
+    try {
+      const response = await notificationsAPI.getUnread()
+      setNotifications(response.data.notifications || [])
+      setUnreadCount(response.data.count || 0)
+      setHasUrgent(response.data.has_urgent || false)
+    } catch (error) {
+      console.error('Error loading notifications:', error)
+    }
+  }
+
+  const generateReminders = async () => {
+    try {
+      await notificationsAPI.generateReminders()
+    } catch (error) {
+      console.error('Error generating reminders:', error)
+    }
+  }
+
+  const handleMarkAsRead = async (id) => {
+    try {
+      await notificationsAPI.markAsRead(id)
+      loadNotifications()
+      setSelectedNotification(null)
+    } catch (error) {
+      console.error('Error marking as read:', error)
+    }
+  }
+
+  const handleNotificationClick = (notification) => {
+    setSelectedNotification(notification)
+  }
+
   const menuItems = [
     { path: '/dashboard', icon: '📊', label: 'لوحة التحكم' },
     { path: '/swot', icon: '🧠', label: 'تحليل SWOT' },
@@ -27,6 +112,7 @@ const Layout = ({ children, user, setIsAuthenticated }) => {
     { path: '/calendar', icon: '📅', label: 'التقويم' },
     { path: '/goals', icon: '🎯', label: 'الأهداف' },
     { path: '/analytics', icon: '📈', label: 'التقارير' },
+    { path: '/notifications', icon: '🔔', label: 'الإشعارات' },
     { path: '/settings', icon: '⚙️', label: 'الإعدادات' }
   ]
 
@@ -39,6 +125,25 @@ const Layout = ({ children, user, setIsAuthenticated }) => {
 
   const closeSidebarOnMobile = () => {
     if (isMobile) setSidebarOpen(false)
+  }
+
+  const getPriorityBadge = (priority) => {
+    switch (priority) {
+      case 'high': return 'bg-red-500'
+      case 'medium': return 'bg-yellow-500'
+      default: return 'bg-blue-500'
+    }
+  }
+
+  const getTypeIcon = (type) => {
+    switch (type) {
+      case 'welcome': return '🎉'
+      case 'task_created': return '✅'
+      case 'task_due_today': return '⚠️'
+      case 'task_due_tomorrow': return '📅'
+      case 'task_reminder_2days': return '🔔'
+      default: return '📌'
+    }
   }
 
   return (
@@ -146,10 +251,109 @@ const Layout = ({ children, user, setIsAuthenticated }) => {
             {/* Right Side */}
             <div className="flex items-center gap-2 sm:gap-3">
               {/* Notifications */}
-              <button className="relative p-2 hover:bg-gray-100 rounded-full transition-colors">
-                <span className="text-xl">🔔</span>
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-              </button>
+              <div className="relative" ref={notificationRef}>
+                <button 
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  className={`
+                    relative p-2 rounded-full transition-all
+                    ${hasUrgent ? 'bg-red-100 text-red-600' : 'hover:bg-gray-100'}
+                    ${shouldShake ? 'animate-shake' : ''}
+                  `}
+                >
+                  <span className="text-xl">🔔</span>
+                  {unreadCount > 0 && (
+                    <span className={`
+                      absolute -top-1 -right-1 min-w-[20px] h-5 flex items-center justify-center
+                      text-xs font-bold text-white rounded-full px-1
+                      ${hasUrgent ? 'bg-red-600' : 'bg-blue-600'}
+                    `}>
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* Notifications Dropdown */}
+                {showNotifications && (
+                  <div className="absolute right-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden z-50">
+                    {selectedNotification ? (
+                      // Notification Detail View
+                      <div className="p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <button 
+                            onClick={() => setSelectedNotification(null)}
+                            className="text-gray-500 hover:text-gray-700"
+                          >
+                            → رجوع
+                          </button>
+                          <button
+                            onClick={() => handleMarkAsRead(selectedNotification.id)}
+                            className="text-blue-600 text-sm font-medium"
+                          >
+                            تحديد كمقروء
+                          </button>
+                        </div>
+                        <div className="h-48 overflow-y-auto">
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className="text-2xl">{getTypeIcon(selectedNotification.type)}</span>
+                            <span className={`w-2 h-2 rounded-full ${getPriorityBadge(selectedNotification.priority)}`}></span>
+                          </div>
+                          <h3 className="font-bold text-lg mb-2">{selectedNotification.title}</h3>
+                          <p className="text-gray-600">{selectedNotification.message}</p>
+                          {selectedNotification.is_urgent && (
+                            <span className="inline-block mt-3 px-3 py-1 bg-red-500 text-white text-sm rounded-full">
+                              عاجل - ينتهي اليوم!
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      // Notifications List
+                      <>
+                        <div className="p-3 border-b border-gray-100 flex items-center justify-between">
+                          <h3 className="font-bold">الإشعارات</h3>
+                          <Link 
+                            to="/notifications" 
+                            onClick={() => setShowNotifications(false)}
+                            className="text-blue-600 text-sm"
+                          >
+                            عرض الكل
+                          </Link>
+                        </div>
+                        <div className="max-h-80 overflow-y-auto">
+                          {notifications.length > 0 ? (
+                            notifications.slice(0, 5).map(notification => (
+                              <div
+                                key={notification.id}
+                                onClick={() => handleNotificationClick(notification)}
+                                className={`
+                                  p-3 border-b border-gray-50 cursor-pointer hover:bg-gray-50 transition-colors
+                                  ${notification.is_urgent ? 'bg-red-50' : ''}
+                                `}
+                              >
+                                <div className="flex items-start gap-3">
+                                  <span className="text-xl">{getTypeIcon(notification.type)}</span>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2">
+                                      <h4 className="font-medium text-sm truncate">{notification.title}</h4>
+                                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${getPriorityBadge(notification.priority)}`}></span>
+                                    </div>
+                                    <p className="text-gray-500 text-xs truncate">{notification.message}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="p-6 text-center text-gray-500">
+                              <span className="text-3xl block mb-2">🔕</span>
+                              <p className="text-sm">لا توجد إشعارات جديدة</p>
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
               
               {/* User Info (Desktop) */}
               <div className="hidden sm:flex items-center gap-2 lg:gap-3">
@@ -180,6 +384,18 @@ const Layout = ({ children, user, setIsAuthenticated }) => {
           </div>
         </main>
       </div>
+
+      {/* Shake Animation Style */}
+      <style>{`
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-3px) rotate(-5deg); }
+          75% { transform: translateX(3px) rotate(5deg); }
+        }
+        .animate-shake {
+          animation: shake 0.5s ease-in-out;
+        }
+      `}</style>
     </div>
   )
 }

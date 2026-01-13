@@ -9,6 +9,7 @@ import Calendar from './pages/Calendar'
 import Goals from './pages/Goals'
 import Analytics from './pages/Analytics'
 import Settings from './pages/Settings'
+import Notifications from './pages/Notifications'
 import Layout from './components/Layout'
 
 function App() {
@@ -98,6 +99,14 @@ function App() {
           <ProtectedRoute>
             <Layout user={user} setIsAuthenticated={setIsAuthenticated}>
               <Analytics user={user} />
+            </Layout>
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/notifications" element={
+          <ProtectedRoute>
+            <Layout user={user} setIsAuthenticated={setIsAuthenticated}>
+              <Notifications user={user} />
             </Layout>
           </ProtectedRoute>
         } />

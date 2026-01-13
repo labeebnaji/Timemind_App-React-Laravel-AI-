@@ -23,6 +23,9 @@ class AuthController extends Controller
             'password' => $request->password,
         ]);
 
+        // Create welcome notification
+        NotificationController::createWelcomeNotification($user->id);
+
         return response()->json([
             'message' => 'تم إنشاء الحساب بنجاح',
             'user' => $user

@@ -16,6 +16,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('tasks', 'TaskController');
     Route::patch('/tasks/{task}/complete', 'TaskController@complete');
     
+    // Notifications
+    Route::get('/notifications', 'NotificationController@index');
+    Route::get('/notifications/unread', 'NotificationController@unread');
+    Route::patch('/notifications/{notification}/read', 'NotificationController@markAsRead');
+    Route::post('/notifications/mark-all-read', 'NotificationController@markAllAsRead');
+    Route::post('/notifications/generate-reminders', 'NotificationController@generateReminders');
+    
     // SWOT Analysis
     Route::post('/swot/analyze', 'SwotController@analyze');
     Route::get('/swot/history', 'SwotController@history');
