@@ -16,6 +16,7 @@ class Task extends Model
         'priority',
         'deadline',
         'completed',
+        'completed_at',
         'category',
         'ai_generated',
         'estimated_time'
@@ -24,7 +25,8 @@ class Task extends Model
     protected $casts = [
         'completed' => 'boolean',
         'ai_generated' => 'boolean',
-        'deadline' => 'date'
+        'deadline' => 'datetime:Y-m-d',
+        'completed_at' => 'datetime'
     ];
 
     public function user()

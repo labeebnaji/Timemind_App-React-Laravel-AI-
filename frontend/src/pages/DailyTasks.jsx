@@ -67,9 +67,19 @@ const DailyTasks = ({ user }) => {
   }
 
   const today = new Date().toISOString().split('T')[0]
-  const todayTasks = tasks.filter(t => t.deadline === today)
-  const upcomingTasks = tasks.filter(t => t.deadline > today)
-  const overdueTasks = tasks.filter(t => t.deadline < today && !t.completed)
+  
+  // Sort by priority: high > medium > low
+  const sortByPriority = (tasks) => {
+    const priorityOrder = { high: 1, medium: 2, low: 3 }
+    return [...tasks].sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority])
+  }
+  
+  const incompleteTasks = tasks.filter(t => !t.completed)
+  const completedTasks = tasks.filter(t => t.completed)
+  
+  const todayTasks = sortByPriority(incompleteTasks.filter(t => t.deadline === today))
+  const upcomingTasks = sortByPriority(incompleteTasks.filter(t => t.deadline > today))
+  const overdueTasks = sortByPriority(incompleteTasks.filter(t => t.deadline < today))
 
   if (loading) {
     return (
@@ -127,10 +137,24 @@ const DailyTasks = ({ user }) => {
           title="المهام القادمة"
           icon="🔜"
           count={upcomingTasks.length}
-          tasks={upcomingTasks.slice(0, 5)}
+          tasks={upcomingTasks}
           onComplete={handleCompleteTask}
           onDelete={handleDeleteTask}
         />
+
+        {/* Completed Tasks */}
+        {completedTasks.length > 0 && (
+          <TaskSection
+            title="المهام المكتملة"
+            icon="✅"
+            count={completedTasks.length}
+            tasks={completedTasks}
+            onComplete={handleCompleteTask}
+            onDelete={handleDeleteTask}
+            isCompleted={true}
+            titleColor="text-green-600"
+          />
+        )}
       </div>
 
       {/* Add Task Modal */}
@@ -214,7 +238,7 @@ const DailyTasks = ({ user }) => {
   )
 }
 
-const TaskSection = ({ title, icon, count, tasks, onComplete, onDelete, isOverdue, emptyMessage, titleColor = '' }) => (
+const TaskSection = ({ title, icon, count, tasks, onComplete, onDelete, isOverdue, isCompleted, emptyMessage, titleColor = '' }) => (
   <div>
     <h2 className={`text-base sm:text-lg font-bold mb-3 flex items-center gap-2 ${titleColor}`}>
       <span>{icon}</span> {title} ({count})
@@ -228,6 +252,7 @@ const TaskSection = ({ title, icon, count, tasks, onComplete, onDelete, isOverdu
             onComplete={onComplete}
             onDelete={onDelete}
             isOverdue={isOverdue}
+            isCompleted={isCompleted}
           />
         ))
       ) : emptyMessage ? (
@@ -239,7 +264,7 @@ const TaskSection = ({ title, icon, count, tasks, onComplete, onDelete, isOverdu
   </div>
 )
 
-const TaskCard = ({ task, onComplete, onDelete, isOverdue }) => {
+const TaskCard = ({ task, onComplete, onDelete, isOverdue, isCompleted }) => {
   const priorityStyles = {
     high: 'bg-gradient-to-r from-red-50 to-red-100 border-r-4 border-red-500',
     medium: 'bg-gradient-to-r from-yellow-50 to-yellow-100 border-r-4 border-yellow-500',
@@ -255,8 +280,7 @@ const TaskCard = ({ task, onComplete, onDelete, isOverdue }) => {
   return (
     <div className={`
       rounded-xl p-3 sm:p-4 shadow-sm transition-all
-      ${priorityStyles[task.priority]}
-      ${task.completed ? 'opacity-50' : ''}
+      ${isCompleted ? 'bg-gradient-to-r from-green-50 to-green-100 border-r-4 border-green-500' : priorityStyles[task.priority]}
       ${isOverdue ? 'ring-2 ring-red-400' : ''}
     `}>
       <div className="flex items-start gap-3">
@@ -264,11 +288,11 @@ const TaskCard = ({ task, onComplete, onDelete, isOverdue }) => {
           type="checkbox"
           checked={task.completed}
           onChange={() => onComplete(task.id)}
-          className="w-5 h-5 mt-0.5 cursor-pointer accent-blue-600 flex-shrink-0"
+          className="w-5 h-5 mt-0.5 cursor-pointer accent-green-600 flex-shrink-0"
         />
         
         <div className="flex-1 min-w-0">
-          <h3 className={`font-semibold text-sm sm:text-base ${task.completed ? 'line-through text-gray-500' : ''}`}>
+          <h3 className={`font-semibold text-sm sm:text-base ${task.completed ? 'text-green-700' : ''}`}>
             {task.title}
           </h3>
           {task.description && (
@@ -281,6 +305,12 @@ const TaskCard = ({ task, onComplete, onDelete, isOverdue }) => {
               <span className="hidden xs:inline">{new Date(task.deadline).toLocaleDateString('ar-EG')}</span>
               <span className="xs:hidden">{task.deadline}</span>
             </span>
+            {task.completed && task.completed_at && (
+              <span className="flex items-center gap-1 text-green-600">
+                <span>✅</span> 
+                {new Date(task.completed_at).toLocaleDateString('ar-EG')}
+              </span>
+            )}
             <span className="flex items-center gap-1 text-gray-600">
               <span>📂</span> {task.category}
             </span>

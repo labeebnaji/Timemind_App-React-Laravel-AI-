@@ -39,22 +39,31 @@ class AnalyticsController extends Controller
     public function weekly(Request $request)
     {
         $user = $request->user();
-        $startOfWeek = now()->startOfWeek();
-        $endOfWeek = now()->endOfWeek();
+        // Start from Saturday (Arabic week starts on Saturday)
+        $startOfWeek = now()->startOfWeek(\Carbon\Carbon::SATURDAY);
 
+        $dayNames = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
+        
         $weeklyData = [];
         for ($i = 0; $i < 7; $i++) {
-            $date = $startOfWeek->copy()->addDays($i);
+            $date = $startOfWeek->copy()->addDays($i)->format('Y-m-d');
+            
+            // Total tasks with deadline on this day
+            $total = $user->tasks()
+                ->whereRaw('DATE(deadline) = ?', [$date])
+                ->count();
+            
+            // Completed tasks (by completed_at date)
+            $completed = $user->tasks()
+                ->where('completed', true)
+                ->whereRaw('DATE(completed_at) = ?', [$date])
+                ->count();
+            
             $weeklyData[] = [
-                'date' => $date->toDateString(),
-                'day' => $date->locale('ar')->dayName,
-                'completed' => $user->tasks()
-                    ->where('deadline', $date->toDateString())
-                    ->where('completed', true)
-                    ->count(),
-                'total' => $user->tasks()
-                    ->where('deadline', $date->toDateString())
-                    ->count()
+                'date' => $date,
+                'day' => $dayNames[$i],
+                'completed' => $completed,
+                'total' => $total
             ];
         }
 

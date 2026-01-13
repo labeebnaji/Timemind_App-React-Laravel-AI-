@@ -9,9 +9,15 @@ class TaskController extends Controller
 {
     public function index(Request $request)
     {
+        $priorityOrder = "CASE 
+            WHEN priority = 'high' THEN 1 
+            WHEN priority = 'medium' THEN 2 
+            WHEN priority = 'low' THEN 3 
+            ELSE 4 END";
+            
         $tasks = $request->user()->tasks()
+            ->orderByRaw($priorityOrder)
             ->orderBy('deadline', 'asc')
-            ->orderBy('priority', 'desc')
             ->get();
 
         return response()->json($tasks);
@@ -79,7 +85,11 @@ class TaskController extends Controller
             return response()->json(['message' => 'غير مصرح'], 403);
         }
 
-        $task->update(['completed' => !$task->completed]);
+        $isCompleting = !$task->completed;
+        $task->update([
+            'completed' => $isCompleting,
+            'completed_at' => $isCompleting ? now() : null
+        ]);
 
         return response()->json($task);
     }
