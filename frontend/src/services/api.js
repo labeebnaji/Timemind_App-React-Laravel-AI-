@@ -29,7 +29,8 @@ export const tasksAPI = {
   create: (task) => api.post('/tasks', task),
   update: (id, task) => api.put(`/tasks/${id}`, task),
   delete: (id) => api.delete(`/tasks/${id}`),
-  complete: (id) => api.patch(`/tasks/${id}/complete`)
+  complete: (id) => api.patch(`/tasks/${id}/complete`),
+  getAITips: (id) => api.get(`/tasks/${id}/ai-tips`)
 }
 
 export const swotAPI = {
@@ -59,6 +60,12 @@ export const notificationsAPI = {
   markAsRead: (id) => api.patch(`/notifications/${id}/read`),
   markAllAsRead: () => api.post('/notifications/mark-all-read'),
   generateReminders: () => api.post('/notifications/generate-reminders')
+}
+
+export const settingsAPI = {
+  updateProfile: (data) => api.put('/user/profile', data),
+  deleteAllTasks: () => api.delete('/tasks/delete-all'),
+  deleteAccount: () => api.delete('/user/account')
 }
 
 export default api

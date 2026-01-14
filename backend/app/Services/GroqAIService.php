@@ -365,4 +365,251 @@ PROMPT;
             ]
         ];
     }
+
+    public function generateTaskTips($task): array
+    {
+        $today = date('Y-m-d');
+        $deadline = date('Y-m-d', strtotime($task->deadline));
+        $daysLeft = (strtotime($deadline) - strtotime($today)) / 86400;
+        
+        $priorityAr = ['high' => 'عالية', 'medium' => 'متوسطة', 'low' => 'منخفضة'][$task->priority] ?? 'متوسطة';
+        $categoryAr = [
+            'work' => 'عمل',
+            'study' => 'دراسة', 
+            'personal' => 'شخصي',
+            'health' => 'صحة',
+            'other' => 'أخرى'
+        ][$task->category] ?? 'عام';
+
+        // Check if task is completed
+        if ($task->completed) {
+            return $this->generateCompletedTaskResponse($task, $priorityAr, $categoryAr);
+        }
+
+        $prompt = <<<PROMPT
+أنت مستشار إنتاجية محترف. أعطني نصائح عملية لإنجاز هذه المهمة.
+
+معلومات المهمة:
+- العنوان: {$task->title}
+- الوصف: {$task->description}
+- التصنيف: {$categoryAr}
+- الأولوية: {$priorityAr}
+- الموعد النهائي: {$deadline}
+- التاريخ الحالي: {$today}
+- الأيام المتبقية: {$daysLeft} يوم
+
+أرجع JSON بالضبط بهذا الشكل (بدون أي نص إضافي أو markdown):
+{
+    "summary": "ملخص قصير جداً للمهمة في جملة واحدة",
+    "steps": [
+        {
+            "number": 1,
+            "title": "عنوان الخطوة الأولى",
+            "description": "شرح مختصر للخطوة",
+            "duration": "15 دقيقة"
+        },
+        {
+            "number": 2,
+            "title": "عنوان الخطوة الثانية",
+            "description": "شرح مختصر للخطوة",
+            "duration": "30 دقيقة"
+        },
+        {
+            "number": 3,
+            "title": "عنوان الخطوة الثالثة",
+            "description": "شرح مختصر للخطوة",
+            "duration": "20 دقيقة"
+        }
+    ],
+    "tips": [
+        "نصيحة عملية أولى مختصرة",
+        "نصيحة عملية ثانية مختصرة",
+        "نصيحة عملية ثالثة مختصرة"
+    ],
+    "best_time": "أفضل وقت لإنجاز هذه المهمة",
+    "motivation": "جملة تحفيزية قصيرة"
+}
+
+قواعد صارمة:
+- 3 خطوات بالضبط
+- 3 نصائح بالضبط
+- كل النصوص بالعربية
+- JSON فقط بدون أي شيء آخر
+PROMPT;
+
+        try {
+            $response = \Http::withoutVerifying()->withHeaders([
+                'Authorization' => 'Bearer ' . $this->apiKey,
+                'Content-Type' => 'application/json',
+            ])->timeout(30)->post($this->apiUrl, [
+                'model' => $this->model,
+                'messages' => [
+                    [
+                        'role' => 'system',
+                        'content' => 'أنت مستشار إنتاجية. أرجع JSON فقط بدون markdown.'
+                    ],
+                    [
+                        'role' => 'user',
+                        'content' => $prompt
+                    ]
+                ],
+                'temperature' => 0.3,
+                'max_tokens' => 1000
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $content = $data['choices'][0]['message']['content'] ?? '';
+                
+                $content = trim($content);
+                $content = str_replace(['```json', '```'], '', $content);
+                $content = trim($content);
+                
+                $result = json_decode($content, true);
+                
+                if (json_last_error() === JSON_ERROR_NONE && isset($result['steps'])) {
+                    return $result;
+                }
+                
+                if (preg_match('/\{[\s\S]*"steps"[\s\S]*\}/s', $content, $matches)) {
+                    $result = json_decode($matches[0], true);
+                    if (json_last_error() === JSON_ERROR_NONE) {
+                        return $result;
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            \Log::error('AI Tips Error: ' . $e->getMessage());
+        }
+
+        // Fallback tips
+        return $this->generateFallbackTips($task, $daysLeft, $priorityAr, $categoryAr);
+    }
+
+    private function generateCompletedTaskResponse($task, $priorityAr, $categoryAr): array
+    {
+        $completedAt = $task->completed_at ? date('Y-m-d', strtotime($task->completed_at)) : date('Y-m-d');
+        
+        // Random congratulation messages
+        $congratulations = [
+            'أحسنت! لقد أنجزت هذه المهمة بنجاح 🎉',
+            'عمل رائع! استمر على هذا المستوى 💪',
+            'ممتاز! أنت شخص منجز ومنظم ✨',
+            'تهانينا! إنجاز آخر يُضاف لسجلك 🏆',
+            'رائع! أثبتّ أنك قادر على تحقيق أهدافك 🌟',
+            'مبروك! كل مهمة تنجزها تقربك من النجاح 🚀',
+        ];
+
+        // Random achievements based on task type
+        $achievements = [];
+        if ($task->priority === 'high') {
+            $achievements = [
+                ['title' => 'إنجاز مهمة عالية الأهمية', 'description' => 'أثبتّ قدرتك على التعامل مع المهام الصعبة'],
+                ['title' => 'تحدي الأولويات', 'description' => 'نجحت في إتمام مهمة ذات أولوية قصوى'],
+                ['title' => 'التركيز على المهم', 'description' => 'أظهرت مهارة في تحديد الأولويات'],
+            ];
+        } elseif ($task->category === 'study') {
+            $achievements = [
+                ['title' => 'متعلم مجتهد', 'description' => 'استثمرت وقتك في التعلم والتطوير'],
+                ['title' => 'طالب علم', 'description' => 'أكملت مهمة دراسية بنجاح'],
+                ['title' => 'باحث عن المعرفة', 'description' => 'خطوة أخرى نحو التميز العلمي'],
+            ];
+        } elseif ($task->category === 'work') {
+            $achievements = [
+                ['title' => 'موظف منتج', 'description' => 'أنجزت مهمة عمل بكفاءة'],
+                ['title' => 'محترف ملتزم', 'description' => 'أثبتّ التزامك بمسؤولياتك المهنية'],
+                ['title' => 'منجز موثوق', 'description' => 'يمكن الاعتماد عليك في إتمام المهام'],
+            ];
+        } else {
+            $achievements = [
+                ['title' => 'منظم ومرتب', 'description' => 'تدير شؤونك الشخصية بفعالية'],
+                ['title' => 'شخص منجز', 'description' => 'لا تترك مهامك معلقة'],
+                ['title' => 'مخطط ناجح', 'description' => 'تحول خططك إلى إنجازات حقيقية'],
+            ];
+        }
+
+        // Random tips for next tasks
+        $nextTips = [
+            'استمر بنفس الحماس في المهام القادمة',
+            'خذ استراحة قصيرة ثم انطلق للمهمة التالية',
+            'سجّل ما تعلمته من هذه المهمة',
+            'شارك إنجازك مع من حولك للتحفيز',
+            'كافئ نفسك على هذا الإنجاز',
+            'راجع قائمة مهامك واختر التالية',
+        ];
+
+        // Random motivational quotes
+        $quotes = [
+            'النجاح ليس نهاية الطريق، بل بداية رحلة جديدة',
+            'كل إنجاز صغير يبني طريقك نحو العظمة',
+            'الإنتاجية ليست عن فعل المزيد، بل عن إنجاز ما يهم',
+            'أنت أقوى مما تظن وأقدر مما تتخيل',
+            'النجاح عادة، وأنت تبنيها يوماً بعد يوم',
+            'كل مهمة تنجزها هي استثمار في مستقبلك',
+        ];
+
+        $randomAchievement = $achievements[array_rand($achievements)];
+        shuffle($nextTips);
+
+        return [
+            'is_completed' => true,
+            'summary' => $congratulations[array_rand($congratulations)],
+            'completed_date' => $completedAt,
+            'achievement' => $randomAchievement,
+            'stats' => [
+                'task_type' => $categoryAr,
+                'priority' => $priorityAr,
+                'status' => 'مكتملة ✓'
+            ],
+            'next_tips' => array_slice($nextTips, 0, 3),
+            'motivation' => $quotes[array_rand($quotes)]
+        ];
+    }
+
+    private function generateFallbackTips($task, $daysLeft, $priorityAr, $categoryAr): array
+    {
+        $steps = [];
+        $tips = [];
+        
+        // Generate steps based on category
+        if ($task->category === 'study') {
+            $steps = [
+                ['number' => 1, 'title' => 'مراجعة المواد', 'description' => 'اقرأ المحتوى بشكل سريع لفهم النقاط الرئيسية', 'duration' => '30 دقيقة'],
+                ['number' => 2, 'title' => 'التلخيص والتدوين', 'description' => 'دوّن النقاط المهمة والأفكار الرئيسية', 'duration' => '45 دقيقة'],
+                ['number' => 3, 'title' => 'المراجعة النهائية', 'description' => 'راجع ما تعلمته وتأكد من الفهم', 'duration' => '20 دقيقة']
+            ];
+            $tips = ['استخدم تقنية بومودورو (25 دقيقة عمل + 5 راحة)', 'ابتعد عن المشتتات أثناء الدراسة', 'اشرب الماء وتناول وجبة خفيفة'];
+        } elseif ($task->category === 'work') {
+            $steps = [
+                ['number' => 1, 'title' => 'تحديد المتطلبات', 'description' => 'حدد بوضوح ما المطلوب إنجازه', 'duration' => '15 دقيقة'],
+                ['number' => 2, 'title' => 'التنفيذ', 'description' => 'ابدأ بالعمل على المهمة بتركيز', 'duration' => '60 دقيقة'],
+                ['number' => 3, 'title' => 'المراجعة والتسليم', 'description' => 'راجع العمل وتأكد من جودته', 'duration' => '15 دقيقة']
+            ];
+            $tips = ['قسّم المهمة لأجزاء صغيرة', 'حدد وقتاً محدداً للإنجاز', 'تواصل مع الفريق إذا احتجت مساعدة'];
+        } else {
+            $steps = [
+                ['number' => 1, 'title' => 'التخطيط', 'description' => 'حدد ما تحتاجه لإنجاز المهمة', 'duration' => '10 دقائق'],
+                ['number' => 2, 'title' => 'التنفيذ', 'description' => 'ابدأ بالخطوة الأولى فوراً', 'duration' => '30 دقيقة'],
+                ['number' => 3, 'title' => 'الإنهاء', 'description' => 'أكمل المهمة وتأكد من النتيجة', 'duration' => '15 دقيقة']
+            ];
+            $tips = ['ابدأ الآن ولا تؤجل', 'ركز على مهمة واحدة', 'كافئ نفسك بعد الإنجاز'];
+        }
+
+        $bestTime = $task->priority === 'high' ? 'الصباح الباكر (8-10 صباحاً)' : 'أي وقت تكون فيه نشيطاً';
+        
+        $motivations = [
+            'كل خطوة صغيرة تقربك من هدفك!',
+            'أنت قادر على إنجاز هذا!',
+            'النجاح يبدأ بخطوة واحدة!',
+            'ثق بنفسك وابدأ الآن!'
+        ];
+
+        return [
+            'summary' => "مهمة {$categoryAr} بأولوية {$priorityAr} - متبقي {$daysLeft} يوم",
+            'steps' => $steps,
+            'tips' => $tips,
+            'best_time' => $bestTime,
+            'motivation' => $motivations[array_rand($motivations)]
+        ];
+    }
 }

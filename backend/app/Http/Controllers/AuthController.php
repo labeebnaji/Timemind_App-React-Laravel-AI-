@@ -69,4 +69,41 @@ class AuthController extends Controller
     {
         return response()->json($request->user());
     }
+
+    public function updateProfile(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+        ]);
+
+        $user = $request->user();
+        $user->name = $request->name;
+        $user->save();
+
+        return response()->json([
+            'message' => 'تم تحديث الملف الشخصي بنجاح',
+            'user' => $user
+        ]);
+    }
+
+    public function deleteAccount(Request $request)
+    {
+        $user = $request->user();
+        
+        // Delete all user's data
+        $user->tasks()->delete();
+        $user->goals()->delete();
+        $user->notifications()->delete();
+        $user->swotAnalyses()->delete();
+        
+        // Delete all tokens
+        $user->tokens()->delete();
+        
+        // Delete user
+        $user->delete();
+
+        return response()->json([
+            'message' => 'تم حذف الحساب بنجاح'
+        ]);
+    }
 }

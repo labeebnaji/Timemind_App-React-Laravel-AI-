@@ -12,9 +12,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', 'AuthController@logout');
     Route::get('/user', 'AuthController@user');
     
+    // User Settings
+    Route::put('/user/profile', 'AuthController@updateProfile');
+    Route::delete('/user/account', 'AuthController@deleteAccount');
+    
     // Tasks
+    Route::delete('/tasks/delete-all', 'TaskController@deleteAll');
     Route::apiResource('tasks', 'TaskController');
     Route::patch('/tasks/{task}/complete', 'TaskController@complete');
+    Route::get('/tasks/{task}/ai-tips', 'TaskController@getAITips');
     
     // Notifications
     Route::get('/notifications', 'NotificationController@index');

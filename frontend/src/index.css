@@ -76,6 +76,98 @@ html, body {
   }
 }
 
+/* ============================================
+   DARK MODE STYLES - Only applied when .dark class is on html
+   ============================================ */
+
+/* Dark mode background */
+html.dark body {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+/* Dark mode cards */
+html.dark .card {
+  background-color: #1f2937;
+  border-color: #374151;
+}
+
+/* Dark mode inputs */
+html.dark .input-field {
+  background-color: #374151;
+  border-color: #4b5563;
+  color: white;
+}
+
+/* Dark mode backgrounds */
+html.dark .bg-white {
+  background-color: #1f2937 !important;
+}
+
+html.dark .bg-gray-50 {
+  background-color: #374151 !important;
+}
+
+html.dark .bg-gray-100 {
+  background-color: #374151 !important;
+}
+
+/* Dark mode text colors */
+html.dark .text-gray-500 {
+  color: #9ca3af !important;
+}
+
+html.dark .text-gray-600 {
+  color: #9ca3af !important;
+}
+
+html.dark .text-gray-700 {
+  color: #d1d5db !important;
+}
+
+html.dark .text-gray-800 {
+  color: #e5e7eb !important;
+}
+
+/* Dark mode borders */
+html.dark .border-gray-100 {
+  border-color: #374151 !important;
+}
+
+html.dark .border-gray-200 {
+  border-color: #4b5563 !important;
+}
+
+/* Dark mode gradients */
+html.dark .from-gray-50 {
+  --tw-gradient-from: #1f2937 !important;
+}
+
+html.dark .to-gray-100 {
+  --tw-gradient-to: #374151 !important;
+}
+
+/* Dark mode glass effect */
+html.dark .glass-effect {
+  background-color: rgba(31, 41, 55, 0.95);
+}
+
+/* Dark mode scrollbar */
+html.dark ::-webkit-scrollbar-track {
+  background: #374151;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: #6b7280;
+}
+
+/* ============================================
+   END DARK MODE STYLES
+   ============================================ */
+
 /* Custom scrollbar for mobile */
 @media (max-width: 640px) {
   ::-webkit-scrollbar {

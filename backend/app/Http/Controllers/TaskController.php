@@ -96,4 +96,23 @@ class TaskController extends Controller
 
         return response()->json($task);
     }
+
+    public function getAITips(Request $request, Task $task)
+    {
+        if ($task->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'غير مصرح'], 403);
+        }
+
+        $aiService = app(\App\Services\GroqAIService::class);
+        $tips = $aiService->generateTaskTips($task);
+
+        return response()->json($tips);
+    }
+
+    public function deleteAll(Request $request)
+    {
+        $request->user()->tasks()->delete();
+
+        return response()->json(['message' => 'تم حذف جميع المهام بنجاح']);
+    }
 }
