@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, cloneElement } from 'react'
 import { analyticsAPI, tasksAPI } from '../services/api'
-import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { ClipboardList, CheckCircle2, TrendingUp, AlertTriangle, Calendar, CalendarRange, FolderOpen, Target, Clock } from 'lucide-react'
 
 const Analytics = ({ user }) => {
   const [period, setPeriod] = useState('weekly')
@@ -115,26 +116,31 @@ const Analytics = ({ user }) => {
     <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">التقارير والإحصائيات 📊</h1>
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold flex items-center gap-2">
+          <TrendingUp className="text-blue-600" size={28} />
+          التقارير والإحصائيات
+        </h1>
         <div className="flex gap-2">
           <button
             onClick={() => setPeriod('weekly')}
-            className={`px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base font-medium transition-colors ${
+            className={`px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base font-medium transition-colors flex items-center gap-1.5 ${
               period === 'weekly' 
                 ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white' 
                 : 'bg-gray-200 hover:bg-gray-300'
             }`}
           >
+            <Calendar size={16} />
             أسبوعي
           </button>
           <button
             onClick={() => setPeriod('monthly')}
-            className={`px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base font-medium transition-colors ${
+            className={`px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base font-medium transition-colors flex items-center gap-1.5 ${
               period === 'monthly' 
                 ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white' 
                 : 'bg-gray-200 hover:bg-gray-300'
             }`}
           >
+            <CalendarRange size={16} />
             شهري
           </button>
         </div>
@@ -145,32 +151,35 @@ const Analytics = ({ user }) => {
         <MetricCard
           title="إجمالي المهام"
           value={stats.totalTasks}
-          icon="📋"
+          icon={<ClipboardList />}
           gradient="from-blue-500 to-blue-600"
         />
         <MetricCard
           title="المهام المكتملة"
           value={stats.completedTasks}
-          icon="✅"
+          icon={<CheckCircle2 />}
           gradient="from-green-500 to-green-600"
         />
         <MetricCard
           title="معدل الإنجاز"
           value={`${stats.completionRate}%`}
-          icon="📊"
+          icon={<TrendingUp />}
           gradient="from-purple-500 to-purple-600"
         />
         <MetricCard
           title="المهام المتأخرة"
           value={stats.overdueTasks}
-          icon="⚠️"
+          icon={<AlertTriangle />}
           gradient="from-red-500 to-red-600"
         />
       </div>
 
       {/* Weekly Performance Chart */}
       <div className="card !p-4 sm:!p-6">
-        <h2 className="text-base sm:text-lg font-bold mb-4">📈 الأداء الأسبوعي</h2>
+        <h2 className="text-base sm:text-lg font-bold mb-4 flex items-center gap-2">
+          <TrendingUp className="text-blue-600" size={20} />
+          الأداء الأسبوعي
+        </h2>
         <div className="h-48 sm:h-64 lg:h-72">
           {weeklyData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
@@ -196,7 +205,10 @@ const Analytics = ({ user }) => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Category Distribution */}
         <div className="card !p-4 sm:!p-6">
-          <h2 className="text-base sm:text-lg font-bold mb-4">📂 توزيع التصنيفات</h2>
+          <h2 className="text-base sm:text-lg font-bold mb-4 flex items-center gap-2">
+            <FolderOpen className="text-orange-600" size={20} />
+            توزيع التصنيفات
+          </h2>
           <div className="h-48 sm:h-64">
             {categoryData.length > 0 && categoryData.some(c => c.value > 0) ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -228,7 +240,10 @@ const Analytics = ({ user }) => {
 
         {/* Priority Distribution */}
         <div className="card !p-4 sm:!p-6">
-          <h2 className="text-base sm:text-lg font-bold mb-4">🎯 توزيع الأولويات</h2>
+          <h2 className="text-base sm:text-lg font-bold mb-4 flex items-center gap-2">
+            <Target className="text-purple-600" size={20} />
+            توزيع الأولويات
+          </h2>
           <div className="h-48 sm:h-64">
             {priorityData.some(p => p.value > 0) ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -261,7 +276,10 @@ const Analytics = ({ user }) => {
 
       {/* Progress Summary */}
       <div className="card !p-4 sm:!p-6">
-        <h2 className="text-base sm:text-lg font-bold mb-4">📋 ملخص التقدم</h2>
+        <h2 className="text-base sm:text-lg font-bold mb-4 flex items-center gap-2">
+          <ClipboardList className="text-green-600" size={20} />
+          ملخص التقدم
+        </h2>
         <div className="space-y-3 sm:space-y-4">
           <ProgressBar 
             label="معدل الإنجاز الكلي" 
@@ -284,17 +302,17 @@ const Analytics = ({ user }) => {
       {/* Stats Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="card !p-4 text-center">
-          <div className="text-3xl sm:text-4xl mb-2">📈</div>
+          <TrendingUp className="text-green-600 mx-auto mb-2" size={36} />
           <h3 className="font-bold text-lg sm:text-xl text-green-600">{stats.completionRate}%</h3>
           <p className="text-gray-600 text-sm">معدل الإنجاز</p>
         </div>
         <div className="card !p-4 text-center">
-          <div className="text-3xl sm:text-4xl mb-2">✅</div>
+          <CheckCircle2 className="text-blue-600 mx-auto mb-2" size={36} />
           <h3 className="font-bold text-lg sm:text-xl text-blue-600">{stats.completedTasks}</h3>
           <p className="text-gray-600 text-sm">مهمة مكتملة</p>
         </div>
         <div className="card !p-4 text-center">
-          <div className="text-3xl sm:text-4xl mb-2">⏳</div>
+          <Clock className="text-orange-600 mx-auto mb-2" size={36} />
           <h3 className="font-bold text-lg sm:text-xl text-orange-600">{stats.totalTasks - stats.completedTasks}</h3>
           <p className="text-gray-600 text-sm">مهمة متبقية</p>
         </div>
@@ -310,7 +328,9 @@ const MetricCard = ({ title, value, icon, gradient }) => (
         <p className="text-white/80 text-xs sm:text-sm mb-1">{title}</p>
         <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold">{value}</h3>
       </div>
-      <span className="text-2xl sm:text-3xl">{icon}</span>
+      <div className="text-white/90">
+        {cloneElement(icon, { size: 28, strokeWidth: 2.5 })}
+      </div>
     </div>
   </div>
 )

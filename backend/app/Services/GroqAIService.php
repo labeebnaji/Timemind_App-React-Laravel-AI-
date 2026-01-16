@@ -371,6 +371,7 @@ PROMPT;
         $today = date('Y-m-d');
         $deadline = date('Y-m-d', strtotime($task->deadline));
         $daysLeft = (strtotime($deadline) - strtotime($today)) / 86400;
+        $randomSeed = rand(1, 1000); // لضمان التنوع
         
         $priorityAr = ['high' => 'عالية', 'medium' => 'متوسطة', 'low' => 'منخفضة'][$task->priority] ?? 'متوسطة';
         $categoryAr = [
@@ -387,54 +388,44 @@ PROMPT;
         }
 
         $prompt = <<<PROMPT
-أنت مستشار إنتاجية محترف. أعطني نصائح عملية لإنجاز هذه المهمة.
+أنت مستشار إنتاجية خبير. أعطني نصائح عملية مخصصة ومبتكرة لإنجاز هذه المهمة المحددة.
 
-معلومات المهمة:
-- العنوان: {$task->title}
-- الوصف: {$task->description}
-- التصنيف: {$categoryAr}
-- الأولوية: {$priorityAr}
-- الموعد النهائي: {$deadline}
-- التاريخ الحالي: {$today}
-- الأيام المتبقية: {$daysLeft} يوم
+[معرف فريد: {$randomSeed}]
 
-أرجع JSON بالضبط بهذا الشكل (بدون أي نص إضافي أو markdown):
+=== معلومات المهمة ===
+العنوان: {$task->title}
+الوصف: {$task->description}
+التصنيف: {$categoryAr}
+الأولوية: {$priorityAr}
+الموعد النهائي: {$deadline}
+التاريخ الحالي: {$today}
+الأيام المتبقية: {$daysLeft} يوم
+
+=== المطلوب ===
+قدم نصائح مخصصة لهذه المهمة بالتحديد بناءً على:
+- عنوان المهمة ووصفها
+- نوع المهمة ({$categoryAr})
+- مستوى الأولوية ({$priorityAr})
+- الوقت المتبقي ({$daysLeft} يوم)
+
+أرجع JSON بهذا الشكل:
 {
-    "summary": "ملخص قصير جداً للمهمة في جملة واحدة",
+    "summary": "ملخص مخصص للمهمة يذكر اسمها وطبيعتها",
     "steps": [
-        {
-            "number": 1,
-            "title": "عنوان الخطوة الأولى",
-            "description": "شرح مختصر للخطوة",
-            "duration": "15 دقيقة"
-        },
-        {
-            "number": 2,
-            "title": "عنوان الخطوة الثانية",
-            "description": "شرح مختصر للخطوة",
-            "duration": "30 دقيقة"
-        },
-        {
-            "number": 3,
-            "title": "عنوان الخطوة الثالثة",
-            "description": "شرح مختصر للخطوة",
-            "duration": "20 دقيقة"
-        }
+        {"number": 1, "title": "خطوة أولى مخصصة للمهمة", "description": "شرح عملي", "duration": "X دقيقة"},
+        {"number": 2, "title": "خطوة ثانية مخصصة", "description": "شرح عملي", "duration": "X دقيقة"},
+        {"number": 3, "title": "خطوة ثالثة مخصصة", "description": "شرح عملي", "duration": "X دقيقة"}
     ],
-    "tips": [
-        "نصيحة عملية أولى مختصرة",
-        "نصيحة عملية ثانية مختصرة",
-        "نصيحة عملية ثالثة مختصرة"
-    ],
-    "best_time": "أفضل وقت لإنجاز هذه المهمة",
-    "motivation": "جملة تحفيزية قصيرة"
+    "tips": ["نصيحة مخصصة 1", "نصيحة مخصصة 2", "نصيحة مخصصة 3"],
+    "best_time": "أفضل وقت لهذه المهمة تحديداً",
+    "motivation": "جملة تحفيزية مرتبطة بالمهمة"
 }
 
-قواعد صارمة:
-- 3 خطوات بالضبط
-- 3 نصائح بالضبط
-- كل النصوص بالعربية
-- JSON فقط بدون أي شيء آخر
+مهم جداً:
+- اجعل كل شيء مخصص لهذه المهمة بالذات
+- لا تكرر نفس النصائح العامة
+- اذكر اسم المهمة في الملخص
+- JSON فقط بدون markdown
 PROMPT;
 
         try {
@@ -446,20 +437,22 @@ PROMPT;
                 'messages' => [
                     [
                         'role' => 'system',
-                        'content' => 'أنت مستشار إنتاجية. أرجع JSON فقط بدون markdown.'
+                        'content' => 'أنت مستشار إنتاجية خبير. قدم نصائح مخصصة ومتنوعة لكل مهمة. أرجع JSON فقط.'
                     ],
                     [
                         'role' => 'user',
                         'content' => $prompt
                     ]
                 ],
-                'temperature' => 0.3,
-                'max_tokens' => 1000
+                'temperature' => 0.8,
+                'max_tokens' => 1200
             ]);
 
             if ($response->successful()) {
                 $data = $response->json();
                 $content = $data['choices'][0]['message']['content'] ?? '';
+                
+                \Log::info('AI Tips Response', ['content_preview' => substr($content, 0, 200)]);
                 
                 $content = trim($content);
                 $content = str_replace(['```json', '```'], '', $content);
@@ -468,15 +461,21 @@ PROMPT;
                 $result = json_decode($content, true);
                 
                 if (json_last_error() === JSON_ERROR_NONE && isset($result['steps'])) {
+                    \Log::info('AI Tips SUCCESS - Real AI response');
                     return $result;
                 }
                 
                 if (preg_match('/\{[\s\S]*"steps"[\s\S]*\}/s', $content, $matches)) {
                     $result = json_decode($matches[0], true);
                     if (json_last_error() === JSON_ERROR_NONE) {
+                        \Log::info('AI Tips SUCCESS - Extracted JSON');
                         return $result;
                     }
                 }
+                
+                \Log::warning('AI Tips JSON parse failed', ['error' => json_last_error_msg()]);
+            } else {
+                \Log::error('AI Tips HTTP Error', ['status' => $response->status(), 'body' => $response->body()]);
             }
         } catch (\Exception $e) {
             \Log::error('AI Tips Error: ' . $e->getMessage());
@@ -611,5 +610,79 @@ PROMPT;
             'best_time' => $bestTime,
             'motivation' => $motivations[array_rand($motivations)]
         ];
+    }
+
+    /**
+     * Generate a response from AI for chat
+     */
+    public function generateResponse(string $prompt): string
+    {
+        try {
+            $response = \Http::withoutVerifying()->withHeaders([
+                'Authorization' => 'Bearer ' . $this->apiKey,
+                'Content-Type' => 'application/json',
+            ])->timeout(60)->post($this->apiUrl, [
+                'model' => $this->model,
+                'messages' => [
+                    [
+                        'role' => 'system',
+                        'content' => 'أنت TimeMind AI، مساعد ذكي متخصص في إدارة المهام والوقت. رد باللغة العربية دائماً. كن مختصراً ومفيداً.'
+                    ],
+                    [
+                        'role' => 'user',
+                        'content' => $prompt
+                    ]
+                ],
+                'temperature' => 0.7,
+                'max_tokens' => 1500
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                return $data['choices'][0]['message']['content'] ?? 'عذراً، لم أتمكن من معالجة طلبك.';
+            }
+
+            \Log::error('Chat AI Error', ['status' => $response->status(), 'body' => $response->body()]);
+            
+            // Return fallback based on prompt content
+            return $this->generateFallbackChatResponse($prompt);
+
+        } catch (\Exception $e) {
+            \Log::error('Chat AI Exception: ' . $e->getMessage());
+            return $this->generateFallbackChatResponse($prompt);
+        }
+    }
+
+    /**
+     * Generate fallback response when API fails
+     */
+    private function generateFallbackChatResponse(string $prompt): string
+    {
+        // Check for tool types in prompt
+        if (strpos($prompt, 'تقييم') !== false || strpos($prompt, 'evaluate') !== false) {
+            return "📊 **التقييم العام**\n7 / 10\n\n📈 **نسبة الإنجاز**\nجيدة\n\n⚡ **نقاط القوة**\n• لديك التزام بتتبع مهامك\n• تستخدم أدوات إدارة الوقت\n\n⚠️ **نقاط التحسين**\n• حاول إكمال المهام في وقتها\n• قسّم المهام الكبيرة\n\n🏆 **التصنيف**\nجيد";
+        }
+        
+        if (strpos($prompt, 'ملخص') !== false || strpos($prompt, 'summary') !== false) {
+            return "📋 **ملخص المهام**\n\n✅ **المكتملة**\nراجع قائمة مهامك\n\n⏳ **قيد التنفيذ**\nلديك مهام تحتاج إنجاز\n\n📊 **نسبة الإنجاز**\nاستمر في العمل!\n\n💡 **الخلاصة**\nأنت على الطريق الصحيح، استمر!";
+        }
+        
+        if (strpos($prompt, 'تحفيز') !== false || strpos($prompt, 'motivate') !== false) {
+            $quotes = [
+                'النجاح ليس نهاية الطريق، بل بداية رحلة جديدة',
+                'كل إنجاز صغير يبني طريقك نحو العظمة',
+                'أنت أقوى مما تظن وأقدر مما تتخيل',
+                'النجاح عادة، وأنت تبنيها يوماً بعد يوم'
+            ];
+            $quote = $quotes[array_rand($quotes)];
+            return "🔥 **تحفيز مخصص لك**\n\n💪 **إنجازك حتى الآن**\nأنت تتقدم بشكل رائع!\n\n🎯 **التحدي القادم**\nركز على المهمة الأهم في قائمتك\n\n⚡ **طاقة اليوم**\nلديك القدرة على إنجاز كل ما تريد!\n\n🌟 **اقتباس اليوم**\n\"{$quote}\"";
+        }
+        
+        if (strpos($prompt, 'ترتيب') !== false || strpos($prompt, 'organize') !== false) {
+            return "✨ **المهمة المرتبة**\n\n📌 **اسم المهمة**\nمهمة جديدة\n\n📝 **الوصف**\nقم بتحديد تفاصيل المهمة\n\n📅 **تاريخ الانتهاء المقترح**\n" . date('Y-m-d', strtotime('+3 days')) . "\n\n📂 **التصنيف**\nشخصي\n\n⚡ **الأولوية**\nمتوسطة\n\n💡 **سبب الاختيارات**\nتم اختيار هذه القيم كافتراضية، يمكنك تعديلها حسب حاجتك";
+        }
+        
+        // Default response
+        return "مرحباً! أنا TimeMind AI 🤖\n\nيبدو أن هناك مشكلة مؤقتة في الاتصال. يمكنك استخدام الأدوات المتاحة:\n\n🔧 **الأدوات المتاحة:**\n• 📊 قم بتقييمي\n• 📋 ملخص المهام\n• ✨ رتب مهمتي\n• 🔥 حفزني\n\nجرب إحدى هذه الأدوات!";
     }
 }

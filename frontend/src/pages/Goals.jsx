@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { goalsAPI } from '../services/api'
+import { Target, Plus, Trash2, Calendar, TrendingUp, Lightbulb, Zap, ClipboardList, Briefcase, BookOpen, Dumbbell } from 'lucide-react'
 
 const Goals = ({ user }) => {
   const [goals, setGoals] = useState([])
@@ -78,11 +79,11 @@ const Goals = ({ user }) => {
   }
 
   const categories = [
-    { value: 'all', label: 'الكل', icon: '📋' },
-    { value: 'personal', label: 'شخصي', icon: '🎯' },
-    { value: 'professional', label: 'مهني', icon: '💼' },
-    { value: 'educational', label: 'تعليمي', icon: '📚' },
-    { value: 'health', label: 'صحي', icon: '🏋️' }
+    { value: 'all', label: 'الكل', icon: ClipboardList },
+    { value: 'personal', label: 'شخصي', icon: Target },
+    { value: 'professional', label: 'مهني', icon: Briefcase },
+    { value: 'educational', label: 'تعليمي', icon: BookOpen },
+    { value: 'health', label: 'صحي', icon: Dumbbell }
   ]
 
   const filteredGoals = selectedCategory === 'all' 
@@ -104,12 +105,16 @@ const Goals = ({ user }) => {
     <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">الأهداف طويلة المدى 🎯</h1>
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold flex items-center gap-2">
+          <Target className="text-blue-600" size={28} />
+          الأهداف طويلة المدى
+        </h1>
         <button 
           onClick={() => setShowAddModal(true)} 
-          className="w-full sm:w-auto btn-primary text-sm sm:text-base !px-4 !py-2.5"
+          className="w-full sm:w-auto btn-primary text-sm sm:text-base !px-4 !py-2.5 flex items-center justify-center gap-2"
         >
-          ➕ إضافة هدف
+          <Plus size={18} />
+          إضافة هدف
         </button>
       </div>
 
@@ -127,7 +132,7 @@ const Goals = ({ user }) => {
               }
             `}
           >
-            <span className="text-lg sm:text-xl">{cat.icon}</span>
+            <cat.icon size={18} />
             <span className="font-medium">{cat.label}</span>
           </button>
         ))}
@@ -147,7 +152,7 @@ const Goals = ({ user }) => {
 
       {filteredGoals.length === 0 && (
         <div className="card !p-8 sm:!p-12 text-center">
-          <span className="text-4xl sm:text-5xl mb-4 block">🎯</span>
+          <Target className="text-gray-400 mx-auto mb-4" size={48} />
           <p className="text-gray-500 text-sm sm:text-base">لا توجد أهداف في هذا التصنيف</p>
         </div>
       )}
@@ -155,17 +160,18 @@ const Goals = ({ user }) => {
       {/* AI Insights */}
       <div className="card !p-4 sm:!p-6 bg-gradient-to-br from-purple-50 to-indigo-50">
         <h3 className="text-base sm:text-lg font-bold mb-3 sm:mb-4 flex items-center gap-2">
-          <span>🤖</span> رؤى الذكاء الاصطناعي
+          <TrendingUp className="text-purple-600" size={20} />
+          رؤى الذكاء الاصطناعي
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <InsightCard
-            icon="💡"
+            icon={<Lightbulb className="text-blue-600" size={20} />}
             title="اقتراح"
             description="تقسيم الهدف إلى مهام أصغر يزيد فرص النجاح بنسبة 80%"
             borderColor="border-blue-500"
           />
           <InsightCard
-            icon="⚡"
+            icon={<Zap className="text-yellow-600" size={20} />}
             title="تحذير"
             description="لديك 3 أهداف بنفس الموعد النهائي، يُنصح بإعادة الجدولة"
             borderColor="border-yellow-500"
@@ -320,10 +326,10 @@ const Goals = ({ user }) => {
 
 const GoalCard = ({ goal, onEdit, onDelete }) => {
   const categoryIcons = {
-    personal: '🎯',
-    professional: '💼',
-    educational: '📚',
-    health: '🏋️'
+    personal: Target,
+    professional: Briefcase,
+    educational: BookOpen,
+    health: Dumbbell
   }
 
   const progressColors = {
@@ -347,12 +353,12 @@ const GoalCard = ({ goal, onEdit, onDelete }) => {
     return 'bg-red-100 text-red-700'
   }
 
+  const CategoryIcon = categoryIcons[goal.category] || Target
+
   return (
     <div className="card !p-4 sm:!p-5 hover:shadow-xl transition-shadow">
       <div className="flex items-start justify-between mb-3">
-        <span className="text-2xl sm:text-3xl">
-          {categoryIcons[goal.category] || '🎯'}
-        </span>
+        <CategoryIcon className="text-blue-600" size={32} />
         <div className="flex items-center gap-2">
           <span className={`px-2 py-0.5 rounded-full text-xs sm:text-sm font-semibold ${getProgressBadgeColor(goal.progress || 0)}`}>
             {goal.progress || 0}%
@@ -361,7 +367,7 @@ const GoalCard = ({ goal, onEdit, onDelete }) => {
             onClick={onDelete}
             className="text-red-500 hover:bg-red-100 p-1 rounded transition-colors"
           >
-            🗑️
+            <Trash2 size={16} />
           </button>
         </div>
       </div>
@@ -381,7 +387,8 @@ const GoalCard = ({ goal, onEdit, onDelete }) => {
 
       <div className="flex items-center justify-between text-xs sm:text-sm text-gray-600">
         <span className="flex items-center gap-1">
-          📅 {goal.deadline ? new Date(goal.deadline).toLocaleDateString('ar-EG') : 'غير محدد'}
+          <Calendar size={14} />
+          {goal.deadline ? new Date(goal.deadline).toLocaleDateString('ar-EG') : 'غير محدد'}
         </span>
         <button 
           onClick={onEdit}
@@ -397,7 +404,7 @@ const GoalCard = ({ goal, onEdit, onDelete }) => {
 const InsightCard = ({ icon, title, description, borderColor }) => (
   <div className={`p-3 sm:p-4 bg-white rounded-xl border-r-4 ${borderColor} shadow-sm`}>
     <p className="font-semibold text-sm sm:text-base flex items-center gap-2">
-      <span>{icon}</span> {title}
+      {icon} {title}
     </p>
     <p className="text-xs sm:text-sm text-gray-600 mt-1">{description}</p>
   </div>

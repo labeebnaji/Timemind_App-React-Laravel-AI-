@@ -1,6 +1,24 @@
 import { useState, useEffect, useRef, createContext, useContext } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { notificationsAPI } from '../services/api'
+import { 
+  LayoutDashboard, 
+  Brain, 
+  CheckSquare, 
+  Calendar, 
+  Target, 
+  BarChart3, 
+  MessageCircle, 
+  Settings, 
+  Bell, 
+  Menu, 
+  LogOut,
+  ChevronLeft,
+  ChevronRight,
+  Search,
+  ArrowRight,
+  ExternalLink
+} from 'lucide-react'
 
 // Create notification context for global access
 export const NotificationContext = createContext()
@@ -132,13 +150,14 @@ const Layout = ({ children, user, setIsAuthenticated }) => {
   }
 
   const menuItems = [
-    { path: '/dashboard', icon: '📊', label: 'لوحة التحكم' },
-    { path: '/swot', icon: '🧠', label: 'تحليل SWOT' },
-    { path: '/daily-tasks', icon: '✅', label: 'المهام اليومية' },
-    { path: '/calendar', icon: '📅', label: 'التقويم' },
-    { path: '/goals', icon: '🎯', label: 'الأهداف' },
-    { path: '/analytics', icon: '📈', label: 'التقارير' },
-    { path: '/settings', icon: '⚙️', label: 'الإعدادات' }
+    { path: '/dashboard', icon: LayoutDashboard, label: 'لوحة التحكم' },
+    { path: '/swot', icon: Brain, label: 'تحليل SWOT' },
+    { path: '/daily-tasks', icon: CheckSquare, label: 'المهام اليومية' },
+    { path: '/calendar', icon: Calendar, label: 'التقويم' },
+    { path: '/goals', icon: Target, label: 'الأهداف' },
+    { path: '/analytics', icon: BarChart3, label: 'التقارير' },
+    { path: '/chat', icon: MessageCircle, label: 'Chat TimeMind' },
+    { path: '/settings', icon: Settings, label: 'الإعدادات' }
   ]
 
   const handleLogout = () => {
@@ -194,7 +213,7 @@ const Layout = ({ children, user, setIsAuthenticated }) => {
                 onClick={() => setSidebarOpen(!sidebarOpen)} 
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors hidden md:block"
               >
-                <span className="text-xl">{sidebarOpen ? '◀' : '▶'}</span>
+                {sidebarOpen ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
               </button>
             </div>
             
@@ -215,7 +234,7 @@ const Layout = ({ children, user, setIsAuthenticated }) => {
                     }
                   `}
                 >
-                  <span className={`flex-shrink-0 ${sidebarOpen ? 'text-xl' : 'text-lg'}`}>{item.icon}</span>
+                  <item.icon size={sidebarOpen ? 22 : 20} className="flex-shrink-0" />
                   {sidebarOpen && (
                     <span className="font-medium text-sm whitespace-nowrap">{item.label}</span>
                   )}
@@ -237,9 +256,10 @@ const Layout = ({ children, user, setIsAuthenticated }) => {
                 </div>
                 <button 
                   onClick={handleLogout} 
-                  className="w-full text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg font-bold text-sm transition-colors"
+                  className="w-full text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg font-bold text-sm transition-colors flex items-center gap-2"
                 >
-                  🚪 تسجيل الخروج
+                  <LogOut size={18} />
+                  تسجيل الخروج
                 </button>
               </div>
             )}
@@ -256,7 +276,7 @@ const Layout = ({ children, user, setIsAuthenticated }) => {
                 onClick={() => setSidebarOpen(true)}
                 className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <span className="text-2xl">☰</span>
+                <Menu size={24} />
               </button>
 
               {/* Search */}
@@ -280,7 +300,7 @@ const Layout = ({ children, user, setIsAuthenticated }) => {
                       ${shouldShake ? 'animate-shake' : ''}
                     `}
                   >
-                    <span className="text-xl">🔔</span>
+                    <Bell size={20} className={hasUrgent ? 'text-red-600' : 'text-gray-700'} />
                     {unreadCount > 0 && (
                       <span className={`
                         absolute -top-1 -right-1 min-w-[20px] h-5 flex items-center justify-center
@@ -384,7 +404,7 @@ const Layout = ({ children, user, setIsAuthenticated }) => {
                   className="hidden sm:flex items-center justify-center text-red-600 hover:bg-red-50 p-2 rounded-xl transition-colors"
                   title="تسجيل الخروج"
                 >
-                  <span className="text-xl">🚪</span>
+                  <LogOut size={20} />
                 </button>
               </div>
             </div>

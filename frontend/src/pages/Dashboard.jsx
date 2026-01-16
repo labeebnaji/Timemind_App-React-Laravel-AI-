@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, cloneElement } from 'react'
 import { analyticsAPI, tasksAPI } from '../services/api'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
+import { ClipboardList, CheckCircle2, AlertTriangle, TrendingUp, Flame, CalendarDays, Folder, Hand, Target, PartyPopper } from 'lucide-react'
 
 const Dashboard = ({ user }) => {
   const [stats, setStats] = useState({
@@ -81,10 +82,12 @@ const Dashboard = ({ user }) => {
     <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4">
-        <h1 className="text-xl sm:text-2xl lg:text-3xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-          مرحباً، {user?.name} 👋
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent flex items-center gap-2">
+          <Hand className="text-blue-600" size={28} />
+          مرحباً، {user?.name}
         </h1>
-        <p className="text-xs sm:text-sm text-gray-500 font-medium">
+        <p className="text-xs sm:text-sm text-gray-500 font-medium flex items-center gap-1.5">
+          <CalendarDays size={16} className="text-gray-400" />
           {new Date().toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
         </p>
       </div>
@@ -94,28 +97,28 @@ const Dashboard = ({ user }) => {
         <StatCard
           title="إجمالي المهام"
           value={stats.totalTasks}
-          icon="📋"
+          icon={<ClipboardList />}
           gradient="from-blue-500 to-blue-600"
           textColor="text-blue-100"
         />
         <StatCard
           title="المهام المكتملة"
           value={stats.completedTasks}
-          icon="✅"
+          icon={<CheckCircle2 />}
           gradient="from-green-500 to-green-600"
           textColor="text-green-100"
         />
         <StatCard
           title="المهام المتأخرة"
           value={stats.overdueTasks}
-          icon="⚠️"
+          icon={<AlertTriangle />}
           gradient="from-red-500 to-red-600"
           textColor="text-red-100"
         />
         <StatCard
           title="معدل الإنجاز"
           value={`${stats.completionRate}%`}
-          icon="📊"
+          icon={<TrendingUp />}
           gradient="from-purple-500 to-purple-600"
           textColor="text-purple-100"
         />
@@ -125,7 +128,10 @@ const Dashboard = ({ user }) => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Weekly Performance */}
         <div className="card !p-4 sm:!p-6">
-          <h2 className="text-base sm:text-lg font-bold mb-4">📈 الإنتاجية الأسبوعية</h2>
+          <h2 className="text-base sm:text-lg font-bold mb-4 flex items-center gap-2">
+            <TrendingUp className="text-blue-600" size={20} />
+            الإنتاجية الأسبوعية
+          </h2>
           <div className="h-48 sm:h-64 lg:h-72">
             {weeklyData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -147,7 +153,10 @@ const Dashboard = ({ user }) => {
 
         {/* Priority Distribution */}
         <div className="card !p-4 sm:!p-6">
-          <h2 className="text-base sm:text-lg font-bold mb-4">🎯 توزيع الأولويات</h2>
+          <h2 className="text-base sm:text-lg font-bold mb-4 flex items-center gap-2">
+            <Target className="text-purple-600" size={20} />
+            توزيع الأولويات
+          </h2>
           <div className="h-48 sm:h-64 lg:h-72">
             {priorityData.some(p => p.value > 0) ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -181,7 +190,8 @@ const Dashboard = ({ user }) => {
       {/* Urgent Tasks */}
       <div className="card !p-4 sm:!p-6">
         <h2 className="text-base sm:text-lg font-bold mb-4 flex items-center gap-2">
-          <span>🔥</span> المهام العاجلة
+          <Flame className="text-red-500" size={20} />
+          المهام العاجلة
         </h2>
         <div className="space-y-2 sm:space-y-3">
           {stats.urgentTasks.length > 0 ? (
@@ -197,7 +207,10 @@ const Dashboard = ({ user }) => {
               </div>
             ))
           ) : (
-            <p className="text-gray-500 text-center py-6 text-sm sm:text-base">لا توجد مهام عاجلة 🎉</p>
+            <p className="text-gray-500 text-center py-6 text-sm sm:text-base flex items-center justify-center gap-2">
+              <PartyPopper className="text-green-500" size={20} />
+              لا توجد مهام عاجلة
+            </p>
           )}
         </div>
       </div>
@@ -205,7 +218,8 @@ const Dashboard = ({ user }) => {
       {/* Upcoming Tasks */}
       <div className="card !p-4 sm:!p-6">
         <h2 className="text-base sm:text-lg font-bold mb-4 flex items-center gap-2">
-          <span>📅</span> المهام القادمة
+          <CalendarDays className="text-blue-500" size={20} />
+          المهام القادمة
         </h2>
         <div className="space-y-2 sm:space-y-3">
           {stats.upcomingTasks.length > 0 ? (
@@ -218,7 +232,10 @@ const Dashboard = ({ user }) => {
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-sm sm:text-base truncate">{task.title}</h3>
                   <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs text-gray-500">📂 {task.category}</span>
+                    <span className="text-xs text-gray-500 flex items-center gap-1">
+                      <Folder size={12} />
+                      {task.category}
+                    </span>
                     <span className={`text-xs px-2 py-0.5 rounded-full ${
                       task.priority === 'high' ? 'bg-red-200 text-red-700' :
                       task.priority === 'medium' ? 'bg-yellow-200 text-yellow-700' :
@@ -249,7 +266,9 @@ const StatCard = ({ title, value, icon, gradient, textColor }) => (
         <p className={`${textColor} text-xs sm:text-sm mb-1 truncate`}>{title}</p>
         <h3 className="text-xl sm:text-2xl lg:text-3xl font-black">{value}</h3>
       </div>
-      <span className="text-2xl sm:text-3xl lg:text-4xl flex-shrink-0">{icon}</span>
+      <div className="text-white/90 flex-shrink-0">
+        {cloneElement(icon, { size: 32, strokeWidth: 2.5 })}
+      </div>
     </div>
   </div>
 )

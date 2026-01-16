@@ -43,4 +43,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/analytics/weekly', 'AnalyticsController@weekly');
     Route::get('/analytics/monthly', 'AnalyticsController@monthly');
     Route::get('/analytics/ai-suggestions', 'AnalyticsController@aiSuggestions');
+    
+    // Chat
+    Route::post('/chat', 'ChatController@chat');
 });

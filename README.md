@@ -110,33 +110,9 @@ API will run on: `http://localhost:8000`
 
 ---
 
-## 📸 Screenshots
+## 📸 Screenshot
 
-### Dashboard
-
-![Dashboard](screenshots/Dashboard.png)
-
-### Smart SWOT Analysis
-
-![SWOT Analysis 1](screenshots/SWOT%20.png)
-![SWOT Analysis 2](screenshots/SWOT%202.png)
-
-### Reports and Analytics
-
-![Reports](screenshots/REPORTS.png)
-
-### Settings
-
-![Settings](screenshots/Settings.png)
-
-### Backend (Laravel API)
-
-![Backend](screenshots/Backend.png)
-
-### Responsive Design
-
-![Responsive](screenshots/Responsive.png)
-
+![TimeMind AI Dashboard](screenshots/Dashboard.png)
 
 ---
 

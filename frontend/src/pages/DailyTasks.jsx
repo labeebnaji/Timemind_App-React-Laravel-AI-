@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { tasksAPI } from '../services/api'
 import { useNotifications } from '../components/Layout'
+import { CheckCircle2, Plus, Edit3, Trash2, X } from 'lucide-react'
 
 const DailyTasks = ({ user }) => {
   const [tasks, setTasks] = useState([])
@@ -140,12 +141,16 @@ const DailyTasks = ({ user }) => {
     <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">المهام اليومية</h1>
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold flex items-center gap-2">
+          <CheckCircle2 className="text-green-600" size={28} />
+          المهام اليومية
+        </h1>
         <button 
           onClick={() => setShowAddModal(true)} 
-          className="w-full sm:w-auto btn-primary text-sm sm:text-base !px-4 !py-2.5"
+          className="w-full sm:w-auto btn-primary text-sm sm:text-base !px-4 !py-2.5 flex items-center justify-center gap-2"
         >
-          + إضافة مهمة
+          <Plus size={18} />
+          إضافة مهمة
         </button>
       </div>
 
@@ -351,7 +356,7 @@ const TaskCard = ({ task, onComplete, onDelete, onEdit, onOpenDetail, isOverdue,
               className="text-blue-500 hover:bg-blue-100 p-1.5 rounded-lg transition-colors"
               title="تعديل"
             >
-              ✏️
+              <Edit3 size={16} />
             </button>
           )}
           <button
@@ -362,7 +367,7 @@ const TaskCard = ({ task, onComplete, onDelete, onEdit, onOpenDetail, isOverdue,
             className="text-red-500 hover:bg-red-100 p-1.5 rounded-lg transition-colors"
             title="حذف"
           >
-            🗑️
+            <Trash2 size={16} />
           </button>
         </div>
       </div>
@@ -399,7 +404,9 @@ const TaskDetailModal = ({ task, aiTips, aiLoading, onClose, onEdit }) => {
                 </span>
               </div>
             </div>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl">×</button>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+              <X size={24} />
+            </button>
           </div>
           {task.description && (
             <p className="text-gray-600 mt-3 text-sm">{task.description}</p>

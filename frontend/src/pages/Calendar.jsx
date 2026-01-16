@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { tasksAPI } from '../services/api'
+import { Calendar as CalendarIcon, CalendarDays, CalendarRange, FolderOpen } from 'lucide-react'
 
 const Calendar = ({ user }) => {
   const [tasks, setTasks] = useState([])
@@ -102,24 +103,30 @@ const Calendar = ({ user }) => {
   return (
     <div className="space-y-4 sm:space-y-6 px-2 sm:px-0">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">التقويم 📅</h1>
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold flex items-center gap-2">
+          <CalendarIcon className="text-blue-600" size={28} />
+          التقويم
+        </h1>
         <div className="flex gap-1 sm:gap-2 w-full sm:w-auto">
           <button
             onClick={() => setView('day')}
-            className={`flex-1 sm:flex-none px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm ${view === 'day' ? 'bg-primary text-white' : 'bg-gray-200'}`}
+            className={`flex-1 sm:flex-none px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm flex items-center justify-center gap-1 ${view === 'day' ? 'bg-primary text-white' : 'bg-gray-200'}`}
           >
+            <CalendarDays size={16} />
             يومي
           </button>
           <button
             onClick={() => setView('week')}
-            className={`flex-1 sm:flex-none px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm ${view === 'week' ? 'bg-primary text-white' : 'bg-gray-200'}`}
+            className={`flex-1 sm:flex-none px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm flex items-center justify-center gap-1 ${view === 'week' ? 'bg-primary text-white' : 'bg-gray-200'}`}
           >
+            <CalendarIcon size={16} />
             أسبوعي
           </button>
           <button
             onClick={() => setView('month')}
-            className={`flex-1 sm:flex-none px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm ${view === 'month' ? 'bg-primary text-white' : 'bg-gray-200'}`}
+            className={`flex-1 sm:flex-none px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm flex items-center justify-center gap-1 ${view === 'month' ? 'bg-primary text-white' : 'bg-gray-200'}`}
           >
+            <CalendarRange size={16} />
             شهري
           </button>
         </div>

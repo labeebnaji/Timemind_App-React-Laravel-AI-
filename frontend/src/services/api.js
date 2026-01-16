@@ -1,6 +1,7 @@
 import axios from 'axios'
 
-const API_URL = 'http://localhost:8000/api'
+// استخدم المتغير البيئي إذا كان موجوداً، وإلا استخدم localhost
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
 
 const api = axios.create({
   baseURL: API_URL,
@@ -66,6 +67,10 @@ export const settingsAPI = {
   updateProfile: (data) => api.put('/user/profile', data),
   deleteAllTasks: () => api.delete('/tasks/delete-all'),
   deleteAccount: () => api.delete('/user/account')
+}
+
+export const chatAPI = {
+  send: (data) => api.post('/chat', data)
 }
 
 export default api

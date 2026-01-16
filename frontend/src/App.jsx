@@ -10,6 +10,7 @@ import Goals from './pages/Goals'
 import Analytics from './pages/Analytics'
 import Settings from './pages/Settings'
 import Notifications from './pages/Notifications'
+import ChatTimeMind from './pages/ChatTimeMind'
 import Layout from './components/Layout'
 
 // Theme Context
@@ -138,6 +139,14 @@ function App() {
             <ProtectedRoute>
               <Layout user={user} setIsAuthenticated={setIsAuthenticated} setUser={setUser}>
                 <Settings user={user} setUser={setUser} />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/chat" element={
+            <ProtectedRoute>
+              <Layout user={user} setIsAuthenticated={setIsAuthenticated}>
+                <ChatTimeMind user={user} />
               </Layout>
             </ProtectedRoute>
           } />
