@@ -87,20 +87,23 @@ const SwotAnalysis = ({ user }) => {
                   { value: 'weekly', label: 'أسبوعي', icon: CalendarDays },
                   { value: 'monthly', label: 'شهري', icon: CalendarDays },
                   { value: 'yearly', label: 'سنوي', icon: Calendar }
-                ].map(p => (
-                  <button
-                    key={p.value}
-                    onClick={() => setPeriod(p.value)}
-                    className={`p-2 sm:p-3 lg:p-4 rounded-lg border-2 transition-all ${
-                      period === p.value
-                        ? 'border-primary bg-blue-50'
-                        : 'border-gray-200 hover:border-primary'
-                    }`}
-                  >
-                    <span className="text-2xl sm:text-3xl block mb-1 sm:mb-2">{p.icon}</span>
-                    <span className="font-semibold text-xs sm:text-sm lg:text-base">{p.label}</span>
-                  </button>
-                ))}
+                ].map(p => {
+                  const IconComponent = p.icon
+                  return (
+                    <button
+                      key={p.value}
+                      onClick={() => setPeriod(p.value)}
+                      className={`p-2 sm:p-3 lg:p-4 rounded-lg border-2 transition-all ${
+                        period === p.value
+                          ? 'border-primary bg-blue-50'
+                          : 'border-gray-200 hover:border-primary'
+                      }`}
+                    >
+                      <IconComponent className="text-blue-600 mx-auto mb-1 sm:mb-2" size={32} />
+                      <span className="font-semibold text-xs sm:text-sm lg:text-base">{p.label}</span>
+                    </button>
+                  )
+                })}
               </div>
             </div>
 
